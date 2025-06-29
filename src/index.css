@@ -1,0 +1,345 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS変数定義 */
+:root {
+  --color-primary: #EC4899;
+  --color-secondary: #F472B6;
+  --color-accent: #BE185D;
+  --animation-duration: 0.3s;
+  --font-scale: 1;
+}
+
+/* ダークモード */
+.dark {
+  --color-primary: #6366F1;
+  --color-secondary: #8B5CF6;
+  --color-accent: #4F46E5;
+}
+
+/* アクセシビリティ対応フォント */
+[data-font="opendyslexic"] {
+  font-family: 'OpenDyslexic', sans-serif;
+}
+
+[data-font="wide-gothic"] {
+  font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/* ブロック間隔設定 */
+[data-spacing="compact"] .task-block {
+  margin-bottom: 2px;
+}
+
+[data-spacing="wide"] .task-block {
+  margin-bottom: 8px;
+}
+
+/* カラーパターン */
+[data-color-pattern="colorblind-safe"] {
+  --color-coral: #E69F00;
+  --color-blue: #56B4E9;
+  --color-green: #009E73;
+  --color-purple: #CC79A7;
+  --color-orange: #D55E00;
+  --color-teal: #0072B2;
+}
+
+[data-color-pattern="high-contrast"] {
+  --color-coral: #000000;
+  --color-blue: #0000FF;
+  --color-green: #008000;
+  --color-purple: #800080;
+  --color-orange: #FF8000;
+  --color-teal: #008080;
+}
+
+/* アニメーション制御 */
+.reduce-motion * {
+  animation-duration: var(--animation-duration) !important;
+  transition-duration: var(--animation-duration) !important;
+}
+
+/* フォントスケール */
+* {
+  font-size: calc(1em * var(--font-scale));
+}
+
+@layer utilities {
+  .animate-slide-up {
+    animation: slide-up var(--animation-duration) ease-out;
+  }
+  
+  .spacing-wide {
+    --spacing-scale: 1.5;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* カスタムスライダー */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--color-primary);
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--color-primary);
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Focus styles */
+.focus-visible:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Timeline specific styles */
+.timeline-container {
+  scroll-behavior: smooth;
+}
+
+/* Loading animation for charts */
+.recharts-wrapper {
+  animation: fade-in 0.5s ease-in;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Mobile touch improvements */
+@media (max-width: 768px) {
+  .timeline-container {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .task-block {
+    min-height: 48px; /* Better touch targets */
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .timeline-grid {
+    border-color: #000;
+  }
+  
+  .task-block {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animation-duration: 0.01s;
+  }
+  
+  * {
+    animation-duration: var(--animation-duration) !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--animation-duration) !important;
+  }
+}
+
+/* エネルギーヒートマップ */
+.energy-heatmap {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 1px;
+  height: 12px;
+}
+
+.energy-cell {
+  border-radius: 2px;
+  transition: opacity 0.2s ease;
+}
+
+.energy-cell:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
+}
+
+/* ライブタイムライン */
+.live-indicator {
+  position: relative;
+  z-index: 20;
+}
+
+.live-indicator::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid #ef4444;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+
+/* プログレスバー */
+.task-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.task-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  transition: width 1s ease-out;
+}
+
+/* 通知スタイル */
+.notification-trigger {
+  transition: all 0.2s ease;
+}
+
+.notification-trigger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* テーマプレビュー */
+.theme-preview {
+  transition: all 0.3s ease;
+}
+
+.theme-preview:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+/* アクセシビリティモード */
+.accessibility-focus {
+  padding: calc(1rem * var(--spacing-scale, 1));
+  margin: calc(0.5rem * var(--spacing-scale, 1));
+}
+
+.accessibility-low-stimulation {
+  animation: none !important;
+  transition: none !important;
+}
+
+.accessibility-low-stimulation * {
+  animation: none !important;
+  transition: opacity 0.1s ease !important;
+}
+
+/* カスタムカラー適用 */
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.border-primary {
+  border-color: var(--color-primary);
+}
+
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+
+.text-secondary {
+  color: var(--color-secondary);
+}
+
+.bg-accent {
+  background-color: var(--color-accent);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+/* PWA対応 */
+@media (display-mode: standalone) {
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  .timeline-container {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
+/* 印刷対応 */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .timeline-container {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  
+  .task-block {
+    break-inside: avoid;
+  }
+}
