@@ -1,0 +1,45 @@
+name: Deploy Vite site to GitHub Pages   # ワークフローの名前
+
+on:
+  push:
+    branches: [main]                     # main ブランチに push したら動く
+  workflow_dispatch:                     # 手動実行も OK
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest               # GitHub が用意してくれる仮想マシン
+    permissions:
+      pages: write                       # Pages に書き込む権限
+      id-token: write                    # 認証用トークン
+      contents: read                     # コードを読む権限
+
+    steps:
+      # ① コードを取ってくる
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ② Node.js と pnpm のセットアップ
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # ③ 依存パッケージをインストール
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ④ Vite でビルド（dist フォルダができる）
+      - name: Build
+        run: pnpm build
+
+      # ⑤ dist フォルダを Pages 用アーティファクトにまとめる
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      # ⑥ GitHub Pages に公開！
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
