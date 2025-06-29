@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Clock, CheckCircle2, MoreVertical, Focus } from 'lucide-react';
+import React from 'react';
+import { Clock, CheckCircle2, Focus, Repeat, Trash2 } from 'lucide-react';
 import { Task } from '../../types';
-import { getTaskColorClasses } from '../../utils/colorUtils';
 import { formatDuration, calculateDuration } from '../../utils/timeUtils';
 import { motion } from 'framer-motion';
 
@@ -12,6 +11,7 @@ interface TaskBlockProps {
   onEdit: (task: Task) => void;
   onFocus: (task: Task) => void;
   onReplan: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export function TaskBlock({ 
@@ -20,95 +20,114 @@ export function TaskBlock({
   onComplete, 
   onEdit, 
   onFocus,
-  onReplan 
+  onReplan,
+  onDelete
 }: TaskBlockProps) {
-  const [showMenu, setShowMenu] = useState(false);
-  const colorClasses = getTaskColorClasses(task.color);
   const duration = calculateDuration(task.startTime, task.endTime);
-
   const completedSubtasks = task.subtasks.filter(st => st.completed).length;
   const totalSubtasks = task.subtasks.length;
 
+  const isCompleted = task.completed;
+
+  const cardVariants = {
+    initial: { opacity: 0, y: 20, scale: 0.98 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, scale: 0.95 },
+    hover: { 
+      scale: 1.02, 
+      zIndex: 50,  // 重なったタスクの上に表示するために高い値に設定
+      transition: { duration: 0.2 } 
+    }
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className={`
-        absolute left-16 right-4 rounded-lg border-2 shadow-sm cursor-pointer
-        transition-all duration-200 hover:shadow-md
-        ${colorClasses.bg} ${colorClasses.border}
-        ${task.completed ? 'opacity-60' : ''}
-      `}
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      whileHover="hover"
+      layout
       style={style}
+      className={`absolute left-16 right-4 rounded-lg p-3 flex flex-col cursor-pointer transition-all duration-200 group shadow-md hover:shadow-lg ${
+        isCompleted
+          ? 'bg-muted/50 border-transparent'
+          : 'bg-primary/10 border-primary/20 hover:border-primary/50 border hover:bg-primary/15'
+      }`}
       onClick={() => onEdit(task)}
     >
-      <div className="p-3 h-full flex flex-col justify-between">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <h3 className={`font-medium text-sm ${colorClasses.text} truncate`}>
-              {task.title}
-            </h3>
-            <div className={`flex items-center space-x-2 mt-1 ${colorClasses.text} opacity-90`}>
-              <Clock className="w-3 h-3" />
-              <span className="text-xs">
-                {task.startTime} - {task.endTime}
-              </span>
-              <span className="text-xs">
-                ({formatDuration(duration)})
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onFocus(task);
-              }}
-              className={`p-1 rounded hover:bg-black hover:bg-opacity-20 ${colorClasses.text}`}
-              title="集中モード"
-            >
-              <Focus className="w-3 h-3" />
-            </button>
-            
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onComplete(task.id);
-              }}
-              className={`p-1 rounded hover:bg-black hover:bg-opacity-20 ${colorClasses.text}`}
-              title="完了"
-            >
-              <CheckCircle2 className={`w-4 h-4 ${task.completed ? 'fill-current' : ''}`} />
-            </button>
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-semibold text-sm truncate ${
+            isCompleted ? 'text-muted-foreground line-through' : 'text-primary'
+          }`}>
+            {task.emoji && <span className="mr-2">{task.emoji}</span>}
+            {task.title}
+          </h3>
+          <div className={`flex items-center gap-2 text-xs mt-1 ${
+            isCompleted ? 'text-muted-foreground/80' : 'text-primary/80'
+          }`}>
+            <Clock className="w-3 h-3" />
+            <span>{task.startTime} - {task.endTime}</span>
+            <span className="px-1.5 py-0.5 bg-primary/10 rounded-full">
+              {formatDuration(duration)}
+            </span>
           </div>
         </div>
-
-        {totalSubtasks > 0 && (
-          <div className={`mt-2 text-xs ${colorClasses.text} opacity-90`}>
-            サブタスク {completedSubtasks}/{totalSubtasks} 完了
-          </div>
-        )}
-
-        {task.isHabit && (
-          <div className={`mt-1 text-xs ${colorClasses.text} opacity-75`}>
-            📅 毎日の習慣
-          </div>
-        )}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <button
+            onClick={(e) => { e.stopPropagation(); onFocus(task); }}
+            className="p-1.5 rounded-md hover:bg-primary/20 text-primary/80 transition-colors"
+            title="集中モード"
+          >
+            <Focus className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onComplete(task.id); }}
+            className="p-1.5 rounded-md hover:bg-green-500/20 text-green-600 transition-colors"
+            title="完了"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              if (window.confirm('このタスクを削除しますか？')) {
+                onDelete(task.id);
+              }
+            }}
+            className="p-1.5 rounded-md hover:bg-red-500/20 text-red-500 transition-colors"
+            title="削除"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {!task.completed && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onReplan(task.id);
-          }}
-          className="absolute -right-2 -top-2 bg-gray-600 text-white rounded-full p-1 text-xs hover:bg-gray-700 transition-colors"
-          title="明日に再計画"
-        >
-          ↗
-        </button>
+      {totalSubtasks > 0 && (
+        <div className="mt-2">
+          <div className="flex justify-between items-center text-xs">
+            <span className={`${isCompleted ? 'text-muted-foreground/80' : 'text-primary/80'}`}>サブタスク</span>
+            <span className={`${isCompleted ? 'text-muted-foreground/80' : 'text-primary/80'}`}>
+              {completedSubtasks}/{totalSubtasks}
+            </span>
+          </div>
+          <div className="w-full bg-primary/20 rounded-full h-1 mt-1">
+            <motion.div 
+              className="bg-primary h-1 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${(completedSubtasks / totalSubtasks) * 100}%` }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </div>
+        </div>
+      )}
+
+      {task.isHabit && (
+        <div className={`mt-2 inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${isCompleted ? 'bg-muted text-muted-foreground' : 'bg-secondary/20 text-secondary'}`}>
+          <Repeat className="w-3 h-3" />
+          <span>習慣</span>
+        </div>
       )}
     </motion.div>
   );

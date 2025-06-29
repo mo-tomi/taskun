@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, BarChart3, Settings, Menu } from 'lucide-react';
+import { Calendar, BarChart3, Menu } from 'lucide-react';
 import { ViewMode } from '../../types';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -26,43 +26,53 @@ export function Header({
   ];
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+    <header className="px-4 py-3 border-b bg-card">
+      <div className="flex items-center justify-between gap-4">
+        {/* Left Section */}
+        <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors md:hidden"
+            className="p-2 rounded-md hover:bg-accent md:hidden"
           >
-            <Menu className="w-5 h-5 text-gray-600" />
+            <Menu className="w-5 h-5 text-muted-foreground" />
           </button>
           
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-6 h-6 text-pink-500" />
-            <h1 className="text-xl font-bold text-gray-900 hidden sm:block">
-              構造化プランナー
-            </h1>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary text-primary-foreground rounded-lg">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-lg font-semibold text-foreground">
+                Taskun
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                あなたの時間を最適化
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-1">
-          <div className="text-center mr-4">
-            <h2 className="text-lg font-semibold text-gray-900">
+        {/* Center Section (Date) - Hidden on small screens */}
+        <div className="hidden lg:flex flex-col items-center">
+            <h2 className="font-semibold text-foreground">
               {format(currentDate, 'EEEE', { locale: ja })}
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               {format(currentDate, 'yyyy年M月d日', { locale: ja })}
             </p>
-          </div>
+        </div>
 
-          <div className="hidden sm:flex bg-gray-100 rounded-lg p-1">
+        {/* Right Section */}
+        <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center bg-muted p-1 rounded-lg">
             {viewModes.map(({ mode, label }) => (
               <button
                 key={mode}
                 onClick={() => onViewModeChange(mode)}
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                   viewMode === mode
-                    ? 'bg-white text-pink-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {label}
@@ -72,10 +82,10 @@ export function Header({
 
           <button
             onClick={onStatsClick}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 rounded-md hover:bg-accent group"
             title="統計を表示"
           >
-            <BarChart3 className="w-5 h-5 text-gray-600" />
+            <BarChart3 className="w-5 h-5 text-muted-foreground group-hover:text-accent-foreground" />
           </button>
         </div>
       </div>

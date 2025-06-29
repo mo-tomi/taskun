@@ -11,7 +11,6 @@ export interface Task {
   subtasks: SubTask[];
   emoji?: string;
   customColor?: string;
-  notifications: NotificationTrigger[];
 }
 
 export interface SubTask {
@@ -19,13 +18,6 @@ export interface SubTask {
   title: string;
   completed: boolean;
   subtasks?: SubTask[]; // 無制限階層対応
-}
-
-export interface NotificationTrigger {
-  id: string;
-  type: 'before' | 'start' | 'progress' | 'remaining';
-  value: number; // 分数または%
-  enabled: boolean;
 }
 
 export type TaskColor = 'coral' | 'blue' | 'green' | 'purple' | 'orange' | 'teal';
@@ -42,40 +34,6 @@ export interface EnergyLevel {
   time: string; // HH:mm
   level: number; // 0-100
   userId: string;
-}
-
-export interface AccessibilitySettings {
-  mode: 'normal' | 'focus' | 'low-stimulation';
-  font: 'default' | 'opendyslexic' | 'wide-gothic';
-  blockSpacing: 'compact' | 'normal' | 'wide';
-  colorPattern: 'default' | 'colorblind-safe' | 'high-contrast';
-  reduceAnimations: boolean;
-  increaseFontSize: boolean;
-}
-
-export interface ThemeSettings {
-  mode: 'light' | 'dark' | 'custom';
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  customColors?: {
-    background: string;
-    surface: string;
-    text: string;
-  };
-}
-
-export interface UserSettings {
-  theme: ThemeSettings;
-  accessibility: AccessibilitySettings;
-  notifications: {
-    defaultTriggers: NotificationTrigger[];
-    webPushEnabled: boolean;
-  };
-  energy: {
-    trackingEnabled: boolean;
-    heartRateIntegration: boolean;
-  };
 }
 
 export interface Stats {

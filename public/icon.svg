@@ -1,0 +1,21 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="24" fill="url(#gradient)"/>
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+  </defs>
+  <!-- カレンダーアイコン -->
+  <rect x="48" y="56" width="96" height="80" rx="8" fill="white" opacity="0.9"/>
+  <rect x="48" y="56" width="96" height="20" rx="8" fill="white"/>
+  <circle cx="72" cy="48" r="4" fill="white"/>
+  <circle cx="120" cy="48" r="4" fill="white"/>
+  <rect x="64" y="40" width="4" height="16" fill="#666"/>
+  <rect x="124" y="40" width="4" height="16" fill="#666"/>
+  
+  <!-- グリッド線 -->
+  <rect x="64" y="88" width="64" height="2" fill="#ec4899"/>
+  <rect x="64" y="104" width="48" height="2" fill="#8b5cf6"/>
+  <rect x="64" y="120" width="32" height="2" fill="#06b6d4"/>
+</svg>
