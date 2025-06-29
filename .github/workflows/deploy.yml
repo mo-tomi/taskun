@@ -18,7 +18,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ② Node.js と pnpm のセットアップ
+      # ② pnpm のセットアップを追加
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      # ③ Node.js のセットアップ（pnpm キャッシュ対応）
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
