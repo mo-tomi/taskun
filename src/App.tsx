@@ -95,119 +95,133 @@ function App() {
   };
 
   return (
-    <div 
-      className="h-screen flex flex-col bg-background font-sans antialiased"
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-    >
-      <Header
-        currentDate={currentDate}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        onStatsClick={() => setIsStatsOpen(true)}
-        onMenuClick={() => {}}
-      />
-
-      <div className="flex-1 flex overflow-hidden p-4 gap-4">
-        {/* Date Navigation */}
-        <div className="hidden md:flex flex-col items-center justify-center w-20 bg-card rounded-lg border p-2">
-          <button
-            onClick={handlePrevDay}
-            className="p-3 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors group"
-            title="前の日"
-          >
-            <ChevronLeft className="w-6 h-6 text-muted-foreground group-hover:text-accent-foreground transition-colors" />
-          </button>
+    <div className="h-screen flex bg-gray-50 font-sans antialiased">
+      {/* 左サイドバー - 受信トレイ */}
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-xl font-semibold text-gray-900">受信トレイ</h1>
+        </div>
+        
+        {/* タスクリスト */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {tasks.map((task) => (
+            <div
+              key={task.id}
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer group"
+            >
+              <div className="flex items-center space-x-3">
+                <div className={`w-3 h-3 rounded-full ${
+                  task.color === 'coral' ? 'bg-red-400' :
+                  task.color === 'blue' ? 'bg-blue-400' :
+                  task.color === 'green' ? 'bg-green-400' :
+                  task.color === 'purple' ? 'bg-purple-400' :
+                  task.color === 'orange' ? 'bg-orange-400' :
+                  'bg-teal-400'
+                }`} />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">{task.title}</div>
+                  <div className="text-xs text-gray-500">{task.startTime} - {task.endTime}</div>
+                </div>
+              </div>
+              <button
+                onClick={() => addTask(task)}
+                className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600"
+              >
+                +
+              </button>
+            </div>
+          ))}
           
-          <div className="text-center my-6 flex-1 flex flex-col justify-center items-center">
-            <div className="text-3xl font-bold text-foreground mb-1">
-              {format(currentDate, 'd')}
-            </div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider font-medium">
-              {format(currentDate, 'MMM', { locale: ja })}
-            </div>
-            {isToday(currentDate) && (
-              <div className="w-2 h-2 bg-primary rounded-full mx-auto mt-2"></div>
-            )}
-          </div>
-
+          {/* 新規タスク追加ボタン */}
           <button
-            onClick={handleNextDay}
-            className="p-3 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors group"
-            title="次の日"
+            onClick={() => setIsQuickAddOpen(true)}
+            className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-400 hover:text-gray-600 text-sm"
           >
-            <ChevronRight className="w-6 h-6 text-muted-foreground group-hover:text-accent-foreground transition-colors" />
+            + 新しいタスクを追加
           </button>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 bg-card rounded-lg border flex flex-col">
-          {viewMode === 'day' && (
-            <>
-              <div className="flex-1 relative">
-                <Timeline
-                  tasks={todayTasks}
-                  currentDate={currentDate}
-                  onTaskComplete={completeTask}
-                  onTaskEdit={handleTaskEdit}
-                  onTaskFocus={handleTaskFocus}
-                  onTaskReplan={replanTask}
-                  onTaskDelete={deleteTask}
-                />
-              </div>
-              
-              <div className="border-t p-4">
-                <EnergyTracker
-                  currentDate={currentDate}
-                  energyLevels={todayEnergyLevels}
-                  onUpdateEnergy={addEnergyLevel}
-                  showHeartRate={false}
-                />
-              </div>
-            </>
-          )}
-          
-          {viewMode !== 'day' && (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <div className="text-center">
-                <div className="text-6xl mb-4">{viewMode === 'week' ? '📅' : '🗓️'}</div>
-                <p className="text-lg font-semibold mb-1">{viewMode === 'week' ? '週' : '月'}表示は開発中です</p>
-                <p className="text-sm">今後のアップデートにご期待ください。</p>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* エネルギートラッカー */}
+        <EnergyTracker
+          currentDate={currentDate}
+          energyLevels={todayEnergyLevels}
+          onUpdateEnergy={(level) => addEnergyLevel(level)}
+          tasks={todayTasks}
+          onTaskFocus={handleTaskFocus}
+        />
       </div>
 
-      {/* Mobile Navigation */}
-      <div className="md:hidden bg-card border-t mx-4 mb-4 mt-0 rounded-b-lg px-4 py-2 flex items-center justify-between">
-        <button onClick={handlePrevDay} className="p-3 rounded-md" title="前の日">
-          <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-        </button>
-        
-        <div className="flex space-x-1">
-          {[ 
-            { mode: 'day' as ViewMode, label: '日' },
-            { mode: 'week' as ViewMode, label: '週' },
-            { mode: 'month' as ViewMode, label: '月' }
-          ].map(({ mode, label }) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                viewMode === mode
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+      {/* 右側メインエリア */}
+      <div className="flex-1 flex flex-col">
+        {/* カレンダーヘッダー */}
+        <div className="bg-white border-b border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handlePrevDay}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {format(currentDate, 'yyyy年M月', { locale: ja })}
+              </h2>
+              <button
+                onClick={handleNextDay}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+          </div>
+          
+          {/* 週間カレンダー */}
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 7 }, (_, i) => {
+              const date = addDays(subDays(currentDate, currentDate.getDay()), i);
+              const isSelected = format(date, 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd');
+              const dayTasks = getTasksForDate(format(date, 'yyyy-MM-dd'));
+              
+              return (
+                <div
+                  key={i}
+                  className={`p-3 text-center rounded-lg cursor-pointer ${
+                    isSelected ? 'bg-red-100 text-red-600' : 'hover:bg-gray-100'
+                  }`}
+                  onClick={() => setCurrentDate(date)}
+                >
+                  <div className="text-xs text-gray-500 mb-1">
+                    {format(date, 'E', { locale: ja })}
+                  </div>
+                  <div className={`text-lg font-semibold ${
+                    isSelected ? 'text-red-600' : 'text-gray-900'
+                  }`}>
+                    {format(date, 'd')}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {format(date, 'M/d')}
+                  </div>
+                  {dayTasks.length > 0 && (
+                    <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-1" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-        
-        <button onClick={handleNextDay} className="p-3 rounded-md" title="次の日">
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-        </button>
+
+        {/* タイムライン */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <Timeline
+            tasks={todayTasks}
+            currentDate={currentDate}
+            onTaskComplete={completeTask}
+            onTaskEdit={handleTaskEdit}
+            onTaskFocus={handleTaskFocus}
+            onTaskReplan={replanTask}
+            onTaskDelete={deleteTask}
+          />
+        </div>
       </div>
 
       {/* Quick Add */}
@@ -238,12 +252,6 @@ function App() {
         habits={habits}
         getHabitStreak={getHabitStreak}
       />
-
-      {/* Keyboard shortcut hint */}
-      <div className="fixed bottom-4 left-4 bg-card border rounded-lg px-3 py-1.5 text-xs text-muted-foreground hidden lg:flex items-center gap-2">
-        <span className="font-mono bg-muted text-muted-foreground rounded px-1.5 py-0.5">/</span>
-        <span>でクイック追加</span>
-      </div>
     </div>
   );
 }

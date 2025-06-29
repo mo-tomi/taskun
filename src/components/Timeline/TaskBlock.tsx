@@ -96,7 +96,7 @@ export function TaskBlock({
                 onDelete(task.id);
               }
             }}
-            className="p-1.5 rounded-md hover:bg-red-500/20 text-red-500 transition-colors"
+            className="p-1.5 rounded-md hover:bg-blue-500/20 text-blue-500 transition-colors"
             title="削除"
           >
             <Trash2 className="w-4 h-4" />

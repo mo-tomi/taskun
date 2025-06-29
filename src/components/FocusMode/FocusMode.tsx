@@ -88,7 +88,7 @@ export function FocusMode({ task, onClose, onComplete, onUpdateSubtask }: FocusM
               cx="50"
               cy="50"
               r="45"
-              stroke="#FF7F9C"
+              stroke="#3B82F6"
               strokeWidth="3"
               fill="none"
               strokeLinecap="round"

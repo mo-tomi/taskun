@@ -61,10 +61,10 @@ export function LiveTimeline({ tasks, currentDate, isToday }: LiveTimelineProps)
         style={{ top: `${currentTimePosition}%` }}
       >
         <div className="flex items-center">
-          <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-l-md font-mono">
+          <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded-l-md font-mono">
             {format(liveState.currentTime, 'HH:mm', { locale: ja })}
           </div>
-          <div className="flex-1 h-0.5 bg-red-500 relative">
+          <div className="flex-1 h-0.5 bg-blue-500 relative">
             <div className="absolute right-0 top-0 w-0 h-0 border-l-4 border-l-red-500 border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
           </div>
         </div>

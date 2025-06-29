@@ -6,11 +6,11 @@
   "background_color": "#ffffff",
   "display": "standalone",
   "orientation": "portrait",
-  "scope": "/",
-  "start_url": "/",
+  "scope": "/taskun/",
+  "start_url": "/taskun/",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/taskun/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

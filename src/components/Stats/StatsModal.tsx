@@ -64,11 +64,11 @@ export function StatsModal({ isOpen, onClose, tasks, habits, getHabitStreak }: S
     name: colorNames[color as keyof typeof colorNames] || color,
     value: count,
     color: {
-      coral: '#EC4899',
+      coral: '#64748B',  // スレートグレー
       blue: '#3B82F6',
       green: '#10B981',
-      purple: '#8B5CF6',
-      orange: '#F97316',
+      purple: '#6366F1',  // インディゴ
+      orange: '#78716C', // ストーン
       teal: '#14B8A6'
     }[color] || '#6B7280'
   }));
@@ -141,7 +141,7 @@ export function StatsModal({ isOpen, onClose, tasks, habits, getHabitStreak }: S
                 <BarChart data={weeklyData}>
                   <XAxis dataKey="day" />
                   <YAxis />
-                  <Bar dataKey="rate" fill="#EC4899" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="rate" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
