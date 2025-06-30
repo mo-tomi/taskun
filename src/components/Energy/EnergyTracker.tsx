@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Battery, TrendingUp, Heart, Clock, Play } from 'lucide-react';
+import { Battery, TrendingUp, Heart, Clock, Play, Sliders } from 'lucide-react';
 import { EnergyLevel, Task } from '../../types';
 import { format } from 'date-fns';
+import { EnergyChart } from './EnergyChart';
 
 interface EnergyTrackerProps {
   currentDate: Date;
@@ -182,12 +183,12 @@ export function EnergyTracker({
           </div>
         )}
       </div>
-      {/* エネルギーレベル入力 */}
-      <div className="px-4 py-3 border-b border-gray-100">
-        <div className="flex items-center justify-between mb-2">
+      {/* 常時表示エネルギースライダー */}
+      <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
-            <Battery className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">エネルギーレベル</span>
+            <Sliders className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-gray-900">エネルギーレベル</span>
             {showHeartRate && heartRate && (
               <div className="flex items-center space-x-1 text-xs text-red-500">
                 <Heart className="w-3 h-3" />
@@ -200,77 +201,101 @@ export function EnergyTracker({
             <span className="text-sm font-bold text-gray-900">{currentEnergy}%</span>
           </div>
         </div>
-
-        {isTracking ? (
-          <div className="space-y-3">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={currentEnergy}
-              onChange={(e) => setCurrentEnergy(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              style={{
-                background: `linear-gradient(to right, #ef4444 0%, #22c55e 50%, #10b981 100%)`
-              }}
-            />
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setIsTracking(false)}
-                className="flex-1 px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleEnergyUpdate}
-                className="flex-1 px-3 py-1 text-xs bg-pink-500 text-white rounded-md hover:bg-pink-600"
-              >
-                記録
-              </button>
-            </div>
+        
+        {/* エネルギースライダー */}
+        <div className="mb-3">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={currentEnergy}
+            onChange={(e) => setCurrentEnergy(parseInt(e.target.value))}
+            onMouseUp={() => onUpdateEnergy(currentEnergy)}
+            onTouchEnd={() => onUpdateEnergy(currentEnergy)}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb"
+            style={{
+              background: `linear-gradient(to right, 
+                #ef4444 0%, 
+                #f97316 25%, 
+                #f59e0b 50%, 
+                #3b82f6 75%, 
+                #10b981 100%)`
+            }}
+          />
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>低</span>
+            <span>普通</span>
+            <span>高</span>
           </div>
-        ) : (
-          <button
-            onClick={() => setIsTracking(true)}
-            className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
-          >
-            現在のエネルギーを記録
-          </button>
-        )}
+        </div>
+        
+        {/* 簡単記録ボタン */}
+        <div className="flex items-center justify-between">
+          <div className="flex space-x-1">
+            <button
+              onClick={() => {
+                setCurrentEnergy(25);
+                onUpdateEnergy(25);
+              }}
+              className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors"
+            >
+              😴 低
+            </button>
+            <button
+              onClick={() => {
+                setCurrentEnergy(50);
+                onUpdateEnergy(50);
+              }}
+              className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs hover:bg-yellow-200 transition-colors"
+            >
+              😐 普通
+            </button>
+            <button
+              onClick={() => {
+                setCurrentEnergy(75);
+                onUpdateEnergy(75);
+              }}
+              className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200 transition-colors"
+            >
+              😊 良い
+            </button>
+            <button
+              onClick={() => {
+                setCurrentEnergy(90);
+                onUpdateEnergy(90);
+              }}
+              className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200 transition-colors"
+            >
+              ⚡ 最高
+            </button>
+          </div>
+          <div className="text-xs text-gray-500 font-medium">
+            📝 自動記録
+          </div>
+        </div>
       </div>
 
-      {/* エネルギーヒートマップ */}
-      <div className="px-4 py-2">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-gray-600">今日のエネルギー推移</span>
-          <TrendingUp className="w-3 h-3 text-gray-400" />
-        </div>
-        <div className="grid grid-cols-24 gap-0.5 h-3">
-          {heatmapData.map(({ hour, level }) => (
-            <div
-              key={hour}
-              className={`rounded-sm ${
-                level === 0 
-                  ? 'bg-gray-100' 
-                  : `bg-gradient-to-t ${getEnergyColor(level)} opacity-${Math.max(20, Math.round(level / 10) * 10)}`
-              }`}
-              title={`${hour}:00 - ${level > 0 ? Math.round(level) + '%' : '未記録'}`}
-            />
-          ))}
-        </div>
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
-          <span>0時</span>
-          <span>12時</span>
-          <span>24時</span>
-        </div>
+      {/* エネルギー推移グラフ */}
+      <div className="p-2">
+        <EnergyChart 
+          energyLevels={energyLevels}
+          currentDate={currentDate}
+          height={100}
+        />
+        
         {/* 記録履歴リスト */}
-        <div className="mt-2">
-          <div className="text-[10px] text-gray-400 mb-1">記録履歴</div>
+        <div className="mt-3 px-2">
+          <div className="text-xs text-gray-500 mb-2">今日の記録</div>
           <div className="flex flex-wrap gap-1">
-            {todayLevels.length === 0 && <span className="text-xs text-gray-300">記録なし</span>}
-            {todayLevels.map((l) => (
-              <span key={l.id} className="px-2 py-0.5 rounded bg-gray-100 text-xs text-gray-700 border border-gray-200">
-                {l.time}：{l.level}%
+            {todayLevels.length === 0 && (
+              <span className="text-xs text-gray-400">記録がありません</span>
+            )}
+            {todayLevels.slice(-5).map((l) => (
+              <span 
+                key={l.id} 
+                className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium"
+              >
+                {l.time} {l.level}%
               </span>
             ))}
           </div>

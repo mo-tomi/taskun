@@ -34,7 +34,8 @@ function App() {
 
   const {
     addEnergyLevel,
-    getEnergyForDate
+    getEnergyForDate,
+    energyLevels
   } = useEnergyTracking();
 
   const todayTasks = getTasksForDate(format(currentDate, 'yyyy-MM-dd'));
@@ -154,7 +155,7 @@ function App() {
         {/* エネルギートラッカー */}
         <EnergyTracker
           currentDate={currentDate}
-          energyLevels={todayEnergyLevels}
+          energyLevels={energyLevels}
           onUpdateEnergy={(level) => addEnergyLevel(level)}
           tasks={todayTasks}
           onTaskFocus={handleTaskFocus}
@@ -230,6 +231,7 @@ function App() {
             onTaskFocus={handleTaskFocus}
             onTaskReplan={replanTask}
             onTaskDelete={deleteTask}
+            onTaskUpdate={updateTask}
           />
         </div>
       </div>

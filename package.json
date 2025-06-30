@@ -9,10 +9,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
-    "clean": "pnpm exec rimraf dist node_modules/.vite",
+    "clean": "rimraf dist node_modules/.vite .pnpm pnpm-lock.yaml",
     "fresh": "pnpm clean && pnpm install",
     "type-check": "tsc --noEmit",
-    "build:prod": "pnpm type-check && pnpm lint && vite build"
+    "build:prod": "pnpm type-check && pnpm lint && vite build",
+    "start": "pnpm dev"
   },
   "dependencies": {
     "date-fns": "^3.6.0",

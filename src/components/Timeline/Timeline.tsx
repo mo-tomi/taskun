@@ -3,6 +3,9 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Check, Clock, MoreHorizontal, Play, Pause } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { TimelineGrid } from './TimelineGrid';
+import { ProgressGauge, LinearProgress } from './ProgressGauge';
+import { calculateTaskProgress } from '../../utils/timeUtils';
 
 interface TimelineProps {
   tasks: Task[];
@@ -12,15 +15,19 @@ interface TimelineProps {
   onTaskFocus: (task: Task) => void;
   onTaskReplan: (id: string) => void;
   onTaskDelete: (id: string) => void;
+  onTaskUpdate: (id: string, updates: Partial<Task>) => void;
 }
 
 export function Timeline({ 
   tasks, 
   currentDate,
   onTaskComplete, 
-  onTaskFocus
+  onTaskFocus,
+  onTaskUpdate
 }: TimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   // リアルタイム時計の更新
   useEffect(() => {
@@ -66,6 +73,32 @@ export function Timeline({
   const currentTask = getCurrentTask();
   const nextTask = getNextTask();
 
+  // タスク編集機能
+  const startEditing = (task: Task) => {
+    setEditingTaskId(task.id);
+    setEditingTitle(task.title);
+  };
+
+  const cancelEditing = () => {
+    setEditingTaskId(null);
+    setEditingTitle('');
+  };
+
+  const saveEdit = () => {
+    if (editingTaskId && editingTitle.trim() && onTaskUpdate) {
+      onTaskUpdate(editingTaskId, { title: editingTitle.trim() });
+      cancelEditing();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      saveEdit();
+    } else if (e.key === 'Escape') {
+      cancelEditing();
+    }
+  };
+
   const getTaskColor = (task: Task) => {
     const colors = {
       coral: { bg: 'bg-red-100', border: 'border-red-300', text: 'text-red-700', dot: 'bg-red-400' },
@@ -91,9 +124,17 @@ export function Timeline({
   }
 
   return (
-    <div className="relative">
+    <div className="relative min-h-screen">
+      {/* 時間軸グリッド */}
+      <TimelineGrid 
+        containerHeight={800}
+        showCurrentTime={true}
+        startHour={6}
+        endHour={23}
+      />
+      
       {/* リアルタイム状況表示 */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="relative z-20 mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
             <div className="w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
@@ -193,14 +234,16 @@ export function Timeline({
           
           return (
             <div key={task.id} className="relative flex items-start space-x-4">
-              {/* タイムライン上の点 */}
-              <div className="relative z-10 flex-shrink-0">
-                <div className={`w-3 h-3 rounded-full border-2 border-white shadow-sm ${
-                  isActive ? 'bg-green-500 animate-pulse' :
-                  task.completed ? colors.dot :
-                  isPast ? 'bg-gray-400' :
-                  colors.dot
-                }`} />
+              {/* 達成度ゲージ */}
+              <div className="relative z-10 flex-shrink-0 flex flex-col items-center space-y-2">
+                <ProgressGauge 
+                  task={task}
+                  size="md"
+                  showPercentage={true}
+                />
+                <div className="text-xs text-center text-gray-500 font-medium">
+                  {Math.round(calculateTaskProgress(task))}%
+                </div>
               </div>
               
               {/* タスクカード */}
@@ -250,12 +293,50 @@ export function Timeline({
                 </div>
                 
                 {/* タスクタイトル */}
-                <h3 className={`text-lg font-semibold ${colors.text} mb-2 ${
-                  task.completed ? 'line-through opacity-60' : ''
-                }`}>
-                  {task.emoji && <span className="mr-2">{task.emoji}</span>}
-                  {task.title}
-                </h3>
+                <div className="mb-2">
+                  {editingTaskId === task.id ? (
+                    <div className="flex items-center space-x-2">
+                      {task.emoji && <span className="text-lg">{task.emoji}</span>}
+                      <input
+                        type="text"
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        onBlur={saveEdit}
+                        className="flex-1 text-lg font-semibold bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        autoFocus
+                      />
+                      <button
+                        onClick={saveEdit}
+                        className="text-green-600 hover:text-green-700 p-1"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={cancelEditing}
+                        className="text-red-600 hover:text-red-700 p-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <h3 
+                      className={`text-lg font-semibold ${colors.text} cursor-pointer hover:text-blue-600 ${
+                        task.completed ? 'line-through opacity-60' : ''
+                      } transition-colors group`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEditing(task);
+                      }}
+                    >
+                      {task.emoji && <span className="mr-2">{task.emoji}</span>}
+                      {task.title}
+                      <span className="ml-2 opacity-0 group-hover:opacity-100 text-sm text-gray-400 transition-opacity">
+                        ✏️
+                      </span>
+                    </h3>
+                  )}
+                </div>
                 
                 {/* タスク説明 */}
                 {task.description && (
@@ -290,23 +371,23 @@ export function Timeline({
                   </div>
                 )}
                 
-                {/* プログレスバー */}
-                {task.subtasks && task.subtasks.length > 0 && (
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                      <span>進捗</span>
-                      <span>{Math.round((task.subtasks.filter(st => st.completed).length / task.subtasks.length) * 100)}%</span>
+                {/* 詳細プログレスバー */}
+                <div className="mt-4">
+                  <LinearProgress 
+                    task={task}
+                    height="h-2"
+                    showLabel={true}
+                    className="mb-2"
+                  />
+                  
+                  {/* 達成度メトリクス */}
+                  {task.subtasks && task.subtasks.length > 0 && (
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>{task.subtasks.filter(st => st.completed).length} / {task.subtasks.length} サブタスク完了</span>
+                      <span className="font-medium">{Math.round(calculateTaskProgress(task))}% 達成</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                      <div 
-                        className={`h-1.5 rounded-full ${colors.dot.replace('bg-', 'bg-').replace('-400', '-500')} transition-all duration-300`}
-                        style={{ 
-                          width: `${(task.subtasks.filter(st => st.completed).length / task.subtasks.length) * 100}%` 
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           );

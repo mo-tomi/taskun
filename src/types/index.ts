@@ -11,6 +11,7 @@ export interface Task {
   subtasks: SubTask[];
   emoji?: string;
   customColor?: string;
+  progress?: number; // 0-100, タスクの進捗度
 }
 
 export interface SubTask {
@@ -58,4 +59,11 @@ export interface LiveTimelineState {
   currentTime: Date;
   isLive: boolean;
   showProgress: boolean;
+}
+
+// エネルギーグラフ用の新しい型
+export interface EnergyGraphData {
+  hour: string;
+  level: number;
+  timestamp: string;
 }

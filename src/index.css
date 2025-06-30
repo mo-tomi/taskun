@@ -138,4 +138,62 @@
   .gradient-secondary {
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   }
+
+  /* エネルギースライダーのスタイル */
+  input[type="range"].slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    height: 8px;
+  }
+
+  input[type="range"].slider-thumb::-webkit-slider-track {
+    background: transparent;
+    height: 8px;
+    border-radius: 4px;
+  }
+
+  input[type="range"].slider-thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  input[type="range"].slider-thumb::-webkit-slider-thumb:hover {
+    background: #2563eb;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  input[type="range"].slider-thumb::-moz-range-track {
+    background: transparent;
+    height: 8px;
+    border-radius: 4px;
+    border: none;
+  }
+
+  input[type="range"].slider-thumb::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  input[type="range"].slider-thumb::-moz-range-thumb:hover {
+    background: #2563eb;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
 }
