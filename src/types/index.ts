@@ -3,7 +3,8 @@ export interface Task {
   title: string;
   startTime: string; // HH:mm format
   endTime: string;
-  date: string; // YYYY-MM-DD format
+  date: string; // YYYY-MM-DD format - 開始日
+  endDate?: string; // YYYY-MM-DD format - 終了日（省略時は開始日と同じ）
   color: TaskColor;
   completed: boolean;
   isHabit: boolean;
@@ -12,6 +13,7 @@ export interface Task {
   emoji?: string;
   customColor?: string;
   progress?: number; // 0-100, タスクの進捗度
+  isMultiDay?: boolean; // 複数日にわたるタスクかどうか
 }
 
 export interface SubTask {
@@ -66,4 +68,14 @@ export interface EnergyGraphData {
   hour: string;
   level: number;
   timestamp: string;
+}
+
+// 🌅 日付をまたぐタスク用のユーティリティ型
+export interface MultiDayTaskSegment {
+  task: Task;
+  segmentDate: string; // この区間が表示される日付
+  isFirstDay: boolean; // 開始日かどうか
+  isLastDay: boolean; // 終了日かどうか
+  segmentStartTime: string; // この日の区間開始時刻
+  segmentEndTime: string; // この日の区間終了時刻
 }

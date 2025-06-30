@@ -1,7 +1,12 @@
 import { useCallback } from 'react';
-import { Task, HabitData } from '../types';
+import { Task, HabitData, MultiDayTaskSegment } from '../types';
 import { useLocalStorage } from './useLocalStorage';
 import { format, startOfDay, addDays } from 'date-fns';
+import {
+  isMultiDayTask,
+  getTaskSegmentsForDate,
+  splitMultiDayTask
+} from '../utils/multiDayTaskUtils';
 
 export function useTasks() {
   const [tasks, setTasks] = useLocalStorage<Task[]>('structured-tasks', []);
@@ -36,7 +41,9 @@ export function useTasks() {
     const newTask: Task = {
       ...task,
       id: crypto.randomUUID(),
-      subtasks: task.subtasks.map(st => ({ ...st, id: crypto.randomUUID() }))
+      subtasks: task.subtasks.map(st => ({ ...st, id: crypto.randomUUID() })),
+      // 🌅 複数日タスクの自動判定
+      isMultiDay: isMultiDayTask({ ...task, id: '', subtasks: [] })
     };
     setTasks(prev => [...prev, newTask]);
     addTaskToHistory(task);
@@ -44,7 +51,7 @@ export function useTasks() {
   }, [setTasks, addTaskToHistory]);
 
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(task => 
+    setTasks(prev => prev.map(task =>
       task.id === id ? { ...task, ...updates } : task
     ));
   }, [setTasks]);
@@ -64,9 +71,9 @@ export function useTasks() {
       setHabits(prev => {
         const existing = prev.find(h => h.taskId === id && h.date === today);
         if (existing) {
-          return prev.map(h => 
-            h.taskId === id && h.date === today 
-              ? { ...h, completed: true } 
+          return prev.map(h =>
+            h.taskId === id && h.date === today
+              ? { ...h, completed: true }
               : h
           );
         }
@@ -81,7 +88,7 @@ export function useTasks() {
 
     const targetDate = newDate || format(addDays(new Date(), 1), 'yyyy-MM-dd');
     const targetTime = newStartTime || '09:00';
-    
+
     updateTask(id, {
       date: targetDate,
       startTime: targetTime,
@@ -89,8 +96,20 @@ export function useTasks() {
     });
   }, [tasks, updateTask]);
 
+  // 🌅 日付をまたぐタスクに対応した取得関数
   const getTasksForDate = useCallback((date: string) => {
-    return tasks.filter(task => task.date === date);
+    // 従来の単日タスク + 日付をまたぐタスクのセグメント
+    const allSegments = getTaskSegmentsForDate(tasks, date);
+    // セグメントからタスクのみを抽出（重複排除）
+    const uniqueTasks = Array.from(
+      new Map(allSegments.map(segment => [segment.task.id, segment.task])).values()
+    );
+    return uniqueTasks;
+  }, [tasks]);
+
+  // 🌅 特定の日のタスクセグメント取得（複数日タスクの表示用）
+  const getTaskSegmentsForDateFunc = useCallback((date: string): MultiDayTaskSegment[] => {
+    return getTaskSegmentsForDate(tasks, date);
   }, [tasks]);
 
   const getHabitStreak = useCallback((taskId: string) => {
@@ -122,6 +141,7 @@ export function useTasks() {
     completeTask,
     replanTask,
     getTasksForDate,
+    getTaskSegments: getTaskSegmentsForDateFunc, // 🌅 複数日タスクセグメント取得
     getHabitStreak,
     habits,
     getTaskHistory // 追加

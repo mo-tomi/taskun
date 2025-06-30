@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Palette, Zap, Timer, RotateCcw } from 'lucide-react';
+import { Plus, Palette, Zap, Timer, RotateCcw, Calendar, ArrowRight } from 'lucide-react';
 import { Task, TaskColor } from '../../types';
 import { getTaskColorClasses } from '../../utils/colorUtils';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
+import { isTimeSpanningNextDay } from '../../utils/multiDayTaskUtils';
 
 interface QuickAddProps {
   onAddTask: (task: Omit<Task, 'id'>) => void;
@@ -15,6 +16,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
   const [title, setTitle] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
+  const [endDate, setEndDate] = useState(''); // 🌅 終了日（空なら開始日と同じ）
   const [color, setColor] = useState<TaskColor>('coral');
   const [isHabit, setIsHabit] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -46,6 +48,29 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
   const updateEndTime = (start: string, durationMinutes: number = 60) => {
     const end = getCurrentEndTime(start, durationMinutes);
     setEndTime(end);
+
+    // 🌅 時刻が翌日にまたがる場合は自動的に終了日を翌日に設定
+    if (isTimeSpanningNextDay(start, end)) {
+      const nextDay = format(addDays(currentDate, 1), 'yyyy-MM-dd');
+      setEndDate(nextDay);
+    } else if (endDate) {
+      // 同じ日に戻った場合は終了日をクリア
+      setEndDate('');
+    }
+  };
+
+  // 🌅 終了時刻が変更された時の処理
+  const handleEndTimeChange = (newEndTime: string) => {
+    setEndTime(newEndTime);
+
+    // 時刻が翌日にまたがる場合は自動的に終了日を設定
+    if (isTimeSpanningNextDay(startTime, newEndTime)) {
+      const nextDay = format(addDays(currentDate, 1), 'yyyy-MM-dd');
+      setEndDate(nextDay);
+    } else if (endDate) {
+      // 同じ日に戻った場合は終了日をクリア
+      setEndDate('');
+    }
   };
 
   // コンポーネントが開かれた時に現在時刻を自動設定
@@ -63,11 +88,19 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
     e.preventDefault();
     if (!title.trim()) return;
 
+    // 🌅 終了日の決定ロジック
+    let finalEndDate = endDate;
+    if (!finalEndDate && isTimeSpanningNextDay(startTime, endTime)) {
+      // 時刻が翌日にまたがる場合は自動的に翌日を設定
+      finalEndDate = format(addDays(currentDate, 1), 'yyyy-MM-dd');
+    }
+
     onAddTask({
       title: title.trim(),
       startTime,
       endTime,
       date: format(currentDate, 'yyyy-MM-dd'),
+      endDate: finalEndDate || undefined, // 🌅 終了日（空なら undefined）
       color,
       completed: false,
       isHabit,
@@ -78,6 +111,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
     setTitle('');
     setStartTime('09:00');
     setEndTime('10:00');
+    setEndDate(''); // 🌅 終了日もリセット
     setIsHabit(false);
     setShowAdvanced(false);
     onToggle();
@@ -159,7 +193,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
                 <span>現在時刻</span>
               </button>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div className="time-input-enhanced" data-current-time={getCurrentTime()}>
                 <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -182,7 +216,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
                 <input
                   type="time"
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
+                  onChange={(e) => handleEndTimeChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all enhanced-focus"
                 />
               </div>
@@ -210,7 +244,18 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
                 <div className={`w-3 h-3 rounded-full ${getTaskColorClasses(color).bg}`}></div>
                 <span className="font-medium">{title}</span>
                 <span className="text-gray-500">{startTime} - {endTime}</span>
+                {/* 🌅 複数日タスクの表示 */}
+                {(endDate || isTimeSpanningNextDay(startTime, endTime)) && (
+                  <span className="text-blue-600 text-xs bg-blue-100 px-2 py-1 rounded-full">
+                    複数日
+                  </span>
+                )}
               </div>
+              {(endDate || isTimeSpanningNextDay(startTime, endTime)) && (
+                <div className="text-xs text-gray-500 mt-1">
+                  期間: {format(currentDate, 'yyyy-MM-dd')} → {endDate || format(addDays(currentDate, 1), 'yyyy-MM-dd')}
+                </div>
+              )}
             </div>
           )}
 
@@ -229,6 +274,56 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
           {/* 詳細設定 */}
           <div className={`progressive-disclosure ${showAdvanced ? 'expanded' : ''}`}>
             <div className="space-y-4 pt-2">
+              {/* 🌅 終了日設定 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  複数日タスク設定
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span>開始日: {format(currentDate, 'yyyy-MM-dd')}</span>
+                    {endDate && (
+                      <>
+                        <ArrowRight className="w-3 h-3" />
+                        <span>終了日: {endDate}</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      min={format(currentDate, 'yyyy-MM-dd')}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all enhanced-focus"
+                      placeholder="終了日を選択（省略可）"
+                    />
+                    {endDate && (
+                      <button
+                        type="button"
+                        onClick={() => setEndDate('')}
+                        className="px-2 py-1 text-xs text-gray-500 hover:text-red-600 transition-colors"
+                        title="終了日をクリア"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  {/* 🌅 複数日タスクの自動検出通知 */}
+                  {(endDate || isTimeSpanningNextDay(startTime, endTime)) && (
+                    <div className="flex items-center space-x-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                      <Calendar className="w-4 h-4" />
+                      <span>
+                        {isTimeSpanningNextDay(startTime, endTime) && !endDate
+                          ? '時刻が翌日にまたがるため、自動的に複数日タスクになります'
+                          : '複数日にわたるタスクとして作成されます'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* 色選択 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -243,9 +338,8 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
                         key={colorOption}
                         type="button"
                         onClick={() => setColor(colorOption)}
-                        className={`w-8 h-8 rounded-full ${colorClasses.bg} ${
-                          color === colorOption ? 'ring-2 ring-indigo-500 ring-offset-2 scale-110' : 'hover:scale-105'
-                        } transition-all micro-interaction`}
+                        className={`w-8 h-8 rounded-full ${colorClasses.bg} ${color === colorOption ? 'ring-2 ring-indigo-500 ring-offset-2 scale-110' : 'hover:scale-105'
+                          } transition-all micro-interaction`}
                       />
                     );
                   })}

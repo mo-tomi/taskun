@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Search, BarChart3, Keyboard, Sun, Moon, Moni
 import { AnimatePresence } from 'framer-motion';
 
 import { Timeline } from './components/Timeline/Timeline';
+import { TimelineMultiDay } from './components/Timeline/TimelineMultiDay'; // 🌅 複数日対応タイムライン
 import { QuickAdd } from './components/Inbox/QuickAdd';
 import { FocusMode } from './components/FocusMode/FocusMode';
 import { StatsModal } from './components/Stats/StatsModal';
@@ -59,6 +60,7 @@ function App() {
     completeTask,
     replanTask,
     getTasksForDate,
+    getTaskSegments, // 🌅 複数日タスクセグメント取得
     getHabitStreak,
     habits,
     getTaskHistory // 追加
@@ -71,6 +73,7 @@ function App() {
   } = useEnergyTracking();
 
   const todayTasks = getTasksForDate(format(currentDate, 'yyyy-MM-dd'));
+  const todayTaskSegments = getTaskSegments(format(currentDate, 'yyyy-MM-dd')); // 🌅 複数日タスクセグメント
   const todayEnergyLevels = getEnergyForDate(format(currentDate, 'yyyy-MM-dd'));
 
   const handlePrevDay = () => {
@@ -258,6 +261,7 @@ function App() {
               const date = addDays(subDays(currentDate, currentDate.getDay()), i);
               const isSelected = format(date, 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd');
               const dayTasks = getTasksForDate(format(date, 'yyyy-MM-dd'));
+              const dayTaskSegments = getTaskSegments(format(date, 'yyyy-MM-dd')); // 🌅 複数日タスクも含む
 
               return (
                 <div
@@ -276,7 +280,7 @@ function App() {
                   <div className="text-xs text-gray-400">
                     {format(date, 'M/d')}
                   </div>
-                  {dayTasks.length > 0 && (
+                  {dayTaskSegments.length > 0 && (
                     <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-1" />
                   )}
                 </div>
@@ -287,7 +291,16 @@ function App() {
 
         {/* タイムライン */}
         <div className="flex-1 overflow-y-auto p-6">
-          <Timeline
+          {/* 🌅 複数日対応タイムライン */}
+          <TimelineMultiDay
+            taskSegments={todayTaskSegments}
+            currentDate={currentDate}
+            onTaskComplete={completeTask}
+            onTaskUpdate={updateTask}
+          />
+
+          {/* 従来のタイムライン（バックアップとして残す） */}
+          {/* <Timeline
             tasks={todayTasks}
             currentDate={currentDate}
             onTaskComplete={completeTask}
@@ -296,7 +309,7 @@ function App() {
             onTaskReplan={replanTask}
             onTaskDelete={deleteTask}
             onTaskUpdate={updateTask}
-          />
+          /> */}
         </div>
       </div>
 
