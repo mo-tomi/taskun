@@ -21,11 +21,6 @@
 - 開始時刻変更時の自動終了時刻計算
 - タスクの重なり問題を解決した削除機能
 
-### 🎨 プレミアムデザイン
-- グラスモーフィズム
-- ニューモーフィズム
-- マイクロインタラクション
-- レスポンシブデザイン
 
 ### 🎯 主要機能
 - **タイムライン表示**: 直感的な時間軸でのタスク管理
@@ -34,59 +29,6 @@
 - **統計表示**: タスク完了率や習慣の連続記録
 - **重なり解決**: 複数タスクが重なった時でも適切に操作可能
 
-## 🛠️ 技術スタック
-
-- **Frontend**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Package Manager**: pnpm
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Date**: date-fns
-- **Animation**: Framer Motion
-
-## 🚦 開発環境
-
-### 必要なソフトウェア
-- Node.js 18+
-- pnpm 8+
-
-### セットアップ
-
-```bash
-# 依存関係のインストール
-pnpm install
-
-# 開発サーバーを起動
-pnpm dev
-
-# 本番ビルド
-pnpm build
-
-# 型チェック
-pnpm type-check
-
-# ESLint実行
-pnpm lint
-
-# ESLint自動修正
-pnpm lint:fix
-```
-
-## 📁 プロジェクト構造
-
-```
-src/
-├── components/         # Reactコンポーネント
-│   ├── Energy/        # エネルギートラッキング
-│   ├── Inbox/         # クイック追加機能
-│   ├── Layout/        # レイアウトコンポーネント
-│   ├── Stats/         # 統計表示
-│   └── Timeline/      # タイムライン表示
-├── hooks/             # カスタムフック
-├── types/             # TypeScript型定義
-├── utils/             # ユーティリティ関数
-└── index.css          # グローバルスタイル
-```
 
 ## 🔄 最近の更新
 
