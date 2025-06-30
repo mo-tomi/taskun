@@ -2,7 +2,7 @@ import { Task, MultiDayTaskSegment } from '../../types';
 import { format, addDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Check, Clock, MoreHorizontal, Play, Pause, ArrowRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ProgressGauge, LinearProgress } from './ProgressGauge';
 import { calculateTaskProgress } from '../../utils/timeUtils';
 import {
@@ -27,19 +27,23 @@ interface TimelineProps {
   taskSegments?: MultiDayTaskSegment[]; // 🌅 複数日タスクセグメント（オプション）
   currentDate: Date;
   onTaskComplete: (id: string) => void;
-  onTaskEdit: (task: Task) => void;
-  onTaskFocus: (task: Task) => void;
-  onTaskReplan: (id: string) => void;
   onTaskDelete: (id: string) => void;
   onTaskUpdate: (id: string, updates: Partial<Task>) => void;
 }
+
+// 拡張されたタスク型（セグメント情報を含む）
+type TaskWithSegment = Task & {
+  _segmentId?: string;
+  _isSegment?: boolean;
+  _segment?: MultiDayTaskSegment;
+};
 
 export function Timeline({
   tasks,
   taskSegments,
   currentDate,
   onTaskComplete,
-  onTaskFocus,
+  onTaskDelete,
   onTaskUpdate
 }: TimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -71,17 +75,31 @@ export function Timeline({
     return () => clearInterval(interval);
   }, []);
 
+  // タスクを開始時間順にソート（複数日タスク対応）
+  const sortedTasks = useMemo(() => {
+    // taskSegmentsが提供されている場合はそれを使用、そうでなければtasksを使用
+    const baseItems: TaskWithSegment[] = taskSegments ?
+      taskSegments.map(segment => ({
+        ...segment.task,
+        // セグメント情報で時間を上書き
+        startTime: segment.segmentStartTime,
+        endTime: segment.segmentEndTime,
+        // セグメント識別用プロパティを追加
+        _segmentId: `${segment.task.id}-${segment.segmentDate}`,
+        _isSegment: true,
+        _segment: segment
+      })) :
+      tasks;
 
-
-  // タスクを開始時間順にソート
-  const sortedTasks = [...tasks].sort((a, b) => {
-    const timeA = parseInt(a.startTime.replace(':', ''));
-    const timeB = parseInt(b.startTime.replace(':', ''));
-    return timeA - timeB;
-  });
+    return baseItems.sort((a, b) => {
+      const timeA = parseInt(a.startTime.replace(':', ''));
+      const timeB = parseInt(b.startTime.replace(':', ''));
+      return timeA - timeB;
+    });
+  }, [tasks, taskSegments]);
 
   // 現在時刻がタスクの時間範囲内かどうかを判定
-  const isTaskActive = (task: Task) => {
+  const isTaskActive = (task: TaskWithSegment) => {
     const now = format(currentTime, 'HH:mm');
     const currentMinutes = parseInt(now.split(':')[0]) * 60 + parseInt(now.split(':')[1]);
     const startMinutes = parseInt(task.startTime.split(':')[0]) * 60 + parseInt(task.startTime.split(':')[1]);
@@ -95,7 +113,7 @@ export function Timeline({
     const now = format(currentTime, 'HH:mm');
     const currentMinutes = parseInt(now.split(':')[0]) * 60 + parseInt(now.split(':')[1]);
 
-    return sortedTasks.find(task => {
+    return sortedTasks.find((task: TaskWithSegment) => {
       const startMinutes = parseInt(task.startTime.split(':')[0]) * 60 + parseInt(task.startTime.split(':')[1]);
       return startMinutes > currentMinutes && !task.completed;
     });
@@ -103,7 +121,7 @@ export function Timeline({
 
   // 現在実行中のタスクを取得
   const getCurrentTask = () => {
-    return sortedTasks.find(task => isTaskActive(task) && !task.completed);
+    return sortedTasks.find((task: TaskWithSegment) => isTaskActive(task) && !task.completed);
   };
 
   const currentTask = getCurrentTask();
@@ -209,7 +227,7 @@ export function Timeline({
   };
 
   // 🎭 改良されたドラッグアンドドロップ機能
-  const handleDragStart = (e: React.DragEvent, task: Task) => {
+  const handleDragStart = (e: React.DragEvent, task: TaskWithSegment) => {
     setDraggedTask(task);
     startDrag(task.id, e.clientY);
     setShowDragHelp(true);
@@ -486,7 +504,7 @@ export function Timeline({
             onDragOver={handleDragOver}
             onDrop={(e) => e.preventDefault()}
           >
-            {sortedTasks.map((task) => {
+            {sortedTasks.map((task: TaskWithSegment) => {
               const colors = getTaskColor(task);
               const isActive = isTaskActive(task);
               const isPast = (() => {
@@ -529,7 +547,7 @@ export function Timeline({
 
               return (
                 <div
-                  key={task.id}
+                  key={task._segmentId || task.id}
                   className={`absolute left-0 right-0 flex items-start space-x-4 pr-4 cursor-move ${draggedTask?.id === task.id ? 'opacity-50 transform rotate-2' : ''
                     }`}
                   style={{
@@ -565,8 +583,6 @@ export function Timeline({
                       height: `${Math.max(taskHeight - 8, 80)}px`,
                       minHeight: '80px'
                     }}
-                  // ポモドーロタイマー機能を無効化
-                  // onClick={() => onTaskFocus(task)}
                   >
                     {/* 🎯 改良されたドラッグインジケーター */}
                     <DragIndicator
@@ -735,10 +751,17 @@ export function Timeline({
                         >
                           {task.emoji && <span className="mr-2">{task.emoji}</span>}
                           {/* 🌅 複数日タスクのラベル表示 */}
-                          {taskSegments ? (() => {
-                            const segment = taskSegments.find(s => s.task.id === task.id);
-                            return segment ? generateMultiDayTaskLabel(segment) : task.title;
-                          })() : task.title}
+                          {(() => {
+                            // taskSegmentsから該当するセグメントを見つける
+                            if (taskSegments) {
+                              const segment = taskSegments.find(s => s.task.id === task.id);
+                              if (segment) {
+                                return generateMultiDayTaskLabel(segment);
+                              }
+                            }
+                            // 通常のタスクまたはセグメントが見つからない場合
+                            return task.title;
+                          })()}
                           <span className="ml-2 opacity-0 group-hover:opacity-100 text-sm text-gray-400 transition-opacity">
                             ✏️
                           </span>
@@ -793,7 +816,7 @@ export function Timeline({
                           サブタスク
                         </div>
                         <div className="space-y-1">
-                          {task.subtasks.slice(0, 3).map((subtask) => (
+                          {task.subtasks.slice(0, 3).map((subtask: any) => (
                             <div key={subtask.id} className="flex items-center space-x-2 text-sm">
                               <div className={`w-1.5 h-1.5 rounded-full ${subtask.completed ? colors.dot : 'bg-gray-300'
                                 }`} />
@@ -823,7 +846,7 @@ export function Timeline({
                       {/* 達成度メトリクス */}
                       {task.subtasks && task.subtasks.length > 0 && (
                         <div className="flex justify-between text-xs text-gray-500">
-                          <span>{task.subtasks.filter(st => st.completed).length} / {task.subtasks.length} サブタスク完了</span>
+                          <span>{task.subtasks.filter((st: any) => st.completed).length} / {task.subtasks.length} サブタスク完了</span>
                           <span className="font-medium">{Math.round(calculateTaskProgress(task))}% 達成</span>
                         </div>
                       )}

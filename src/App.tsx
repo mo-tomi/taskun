@@ -6,7 +6,6 @@ import { AnimatePresence } from 'framer-motion';
 import { Timeline } from './components/Timeline/Timeline';
 import { TimelineMultiDay } from './components/Timeline/TimelineMultiDay'; // 🌅 複数日対応タイムライン
 import { QuickAdd } from './components/Inbox/QuickAdd';
-import { FocusMode } from './components/FocusMode/FocusMode';
 import { StatsModal } from './components/Stats/StatsModal';
 import { EnergyTracker } from './components/Energy/EnergyTracker';
 
@@ -23,7 +22,6 @@ import SimpleAnalytics from './components/Analytics/SimpleAnalytics';
 function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-  const [focusTask, setFocusTask] = useState<Task | null>(null);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   // 🎨 新機能の状態管理
@@ -299,7 +297,6 @@ function App() {
           currentDate={currentDate}
           onTaskComplete={completeTask}
           onTaskEdit={handleTaskEdit}
-          onTaskFocus={handleTaskFocus}
           onTaskReplan={replanTask}
           onTaskDelete={deleteTask}
           onTaskUpdate={updateTask}
@@ -320,18 +317,6 @@ function App() {
         isOpen={isQuickAddOpen}
         onToggle={() => setIsQuickAddOpen(!isQuickAddOpen)}
       />
-
-      {/* Focus Mode */}
-      <AnimatePresence>
-        {focusTask && (
-          <FocusMode
-            task={focusTask}
-            onClose={() => setFocusTask(null)}
-            onComplete={completeTask}
-            onUpdateSubtask={handleUpdateSubtask}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Modals */}
       <StatsModal
@@ -465,8 +450,8 @@ function App() {
                       <div
                         key={todo.id}
                         className={`p-3 mb-2 rounded-lg border cursor-pointer transition-all duration-200 ${isSelected
-                            ? 'border-blue-500 bg-blue-50 shadow-md'
-                            : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                           }`}
                         onClick={() => toggleTodoSelection(todo.id)}
                       >
