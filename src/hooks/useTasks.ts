@@ -43,7 +43,7 @@ export function useTasks() {
       id: crypto.randomUUID(),
       subtasks: task.subtasks.map(st => ({ ...st, id: crypto.randomUUID() })),
       // 🌅 複数日タスクの自動判定
-      isMultiDay: isMultiDayTask({ ...task, id: '', subtasks: [] })
+      isMultiDay: task.endDate ? true : (task.startTime > task.endTime) // シンプルな判定に変更
     };
     setTasks(prev => [...prev, newTask]);
     addTaskToHistory(task);

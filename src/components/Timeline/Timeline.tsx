@@ -70,6 +70,8 @@ export function Timeline({
     return () => clearInterval(interval);
   }, []);
 
+
+
   // タスクを開始時間順にソート
   const sortedTasks = [...tasks].sort((a, b) => {
     const timeA = parseInt(a.startTime.replace(':', ''));
@@ -326,7 +328,8 @@ export function Timeline({
     );
   }
 
-  const timeSlots = Array.from({ length: 18 }, (_, i) => 6 + i); // 6時から23時まで
+  // 🕐 時間軸の設定（6時〜23時）
+  const timeSlots = Array.from({ length: 18 }, (_, i) => 6 + i);
 
   return (
     <div className="relative min-h-screen">
@@ -471,15 +474,36 @@ export function Timeline({
                 return currentMinutes > endMinutes;
               })();
 
-              // タスクの時間位置を計算
-              const startHour = parseInt(task.startTime.split(':')[0]);
-              const startMinute = parseInt(task.startTime.split(':')[1]);
-              const endHour = parseInt(task.endTime.split(':')[0]);
-              const endMinute = parseInt(task.endTime.split(':')[1]);
+              // 🌅 複数日タスクのセグメント時間を取得
+              let displayStartTime = task.startTime;
+              let displayEndTime = task.endTime;
+
+              if (taskSegments) {
+                const segment = taskSegments.find(s => s.task.id === task.id);
+                if (segment) {
+                  displayStartTime = segment.segmentStartTime;
+                  displayEndTime = segment.segmentEndTime;
+                }
+              }
+
+              // タスクの時間位置を計算（セグメント時間を使用）
+              const startHour = parseInt(displayStartTime.split(':')[0]);
+              const startMinute = parseInt(displayStartTime.split(':')[1]);
+              const endHour = parseInt(displayEndTime.split(':')[0]);
+              const endMinute = parseInt(displayEndTime.split(':')[1]);
 
               // 6時からの相対位置を計算
               const topPosition = ((startHour - 6) * 64) + (startMinute / 60 * 64);
-              const taskHeight = ((endHour - startHour) * 64) + ((endMinute - startMinute) / 60 * 64);
+
+              // 🌅 複数日タスクの場合、適切な高さを計算
+              let taskHeight;
+              if (endHour < startHour) {
+                // 翌日にまたがる場合（例：23:00-02:00の場合）
+                taskHeight = ((24 - startHour + endHour) * 64) + ((endMinute - startMinute) / 60 * 64);
+              } else {
+                // 通常の場合
+                taskHeight = ((endHour - startHour) * 64) + ((endMinute - startMinute) / 60 * 64);
+              }
 
               return (
                 <div
@@ -632,7 +656,7 @@ export function Timeline({
                               startTimeEditing(task);
                             }}
                           >
-                            {task.startTime} - {task.endTime}
+                            {displayStartTime} - {displayEndTime}
                             <span className="ml-2 opacity-0 group-hover:opacity-100 text-xs text-gray-400 transition-opacity">
                               ⏰
                             </span>
