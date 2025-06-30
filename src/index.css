@@ -139,6 +139,73 @@
     --gradient-accent: linear-gradient(135deg, rgb(var(--accent-light)) 0%, rgb(var(--accent-dark)) 100%);
     --gradient-surface: linear-gradient(135deg, rgb(var(--surface)) 0%, rgb(var(--surface-variant)) 100%);
   }
+
+  /* 🌑 Dark Mode Color Palette */
+  html.dark {
+    --background: 15 23 42;
+    /* #0f172a - deep dark blue */
+    --surface: 30 41 59;
+    /* #1e293b - rich dark slate */
+    --surface-variant: 51 65 85;
+    /* #334155 - slate gray */
+    --foreground: 226 232 240;
+    /* #e2e8f0 - light slate gray */
+
+    --card: 30 41 59;
+    /* #1e293b */
+    --card-foreground: 226 232 240;
+    /* #e2e8f0 */
+    --card-border: 71 85 105;
+    /* #475569 */
+
+    /* Primary colors are often brightened in dark mode */
+    --primary: 96 165 250;
+    /* #60a5fa - soft blue */
+    --primary-light: 147 197 253;
+    /* #93c5fd */
+    --primary-dark: 59 130 246;
+    /* #3b82f6 */
+    --primary-foreground: 15 23 42;
+    /* #0f172a */
+
+    /* Secondary colors */
+    --secondary: 196 181 253;
+    /* #c4b5fd - soft purple */
+    --secondary-light: 221 214 254;
+    /* #ddd6fe */
+    --secondary-dark: 167 139 250;
+    /* #a78bfa */
+    --secondary-foreground: 30 41 59;
+    /* #1e293b */
+
+    /* Accent colors */
+    --accent: 252 165 165;
+    /* #fca5a5 - soft red for accent */
+    --accent-light: 253 186 142;
+    /* #fdb98e */
+    --accent-dark: 249 115 22;
+    /* #f97316 */
+    --accent-foreground: 30 41 59;
+    /* #1e293b */
+
+    /* Status colors remain vibrant */
+    --success: 74 222 128;
+    /* #4ade80 */
+    --warning: 251 191 36;
+    /* #fbbf24 */
+    --error: 248 113 113;
+    /* #f87171 */
+
+    --border: 51 65 85;
+    /* #334155 */
+    --border-light: 71 85 105;
+    /* #475569 */
+    --border-strong: 100 116 139;
+    /* #64748b */
+    --input: 51 65 85;
+    --ring: 96 165 250;
+    /* primary */
+  }
 }
 
 @layer base {
@@ -866,6 +933,138 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
 
 /* スペーシング調整 */
 .safe-bottom {
-  padding-bottom: 192px;
-  /* エネルギートラッカーの高さ分 */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 🎥 Animation System - Dynamic & Performant */
+@layer components {
+
+  /* Keyframes for reuse */
+  @keyframes bounceGentle {
+
+    0%,
+    100% {
+      transform: translateY(-2%);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+
+    50% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-glow {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(var(--primary-light), 0.4);
+    }
+
+    50% {
+      box-shadow: 0 0 0 10px rgba(var(--primary-light), 0);
+    }
+  }
+
+  /* Animation utility classes */
+  .animate-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-bounce-gentle {
+    animation: bounceGentle 1.5s infinite;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s infinite;
+  }
+
+  /* Component-specific animations */
+  .btn {
+    @apply animate-smooth transform;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn:active {
+    transform: translateY(0px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-interactive {
+    @apply animate-smooth;
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .loading-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .focus-ring-animation:focus-visible {
+    @apply ring-2 ring-offset-2 ring-primary;
+    animation: pulse-glow 1.5s infinite;
+  }
 }

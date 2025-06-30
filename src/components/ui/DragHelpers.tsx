@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Icon } from './Icon';
 import { Move, Clock, ArrowUpDown } from 'lucide-react';
 
 // 🎯 ドラッグ状態の型定義
@@ -250,7 +252,7 @@ export const DragRipple: React.FC<DragRippleProps> = ({ visible, x, y }) => {
 
 // 🎯 ドラッグ状態管理フック
 export const useDragState = () => {
-    const [dragState, setDragState] = React.useState<DragState>({
+    const [dragState, setDragState] = useState<DragState>({
         isDragging: false,
         draggedItemId: null,
         dragStartY: 0,
@@ -259,30 +261,39 @@ export const useDragState = () => {
         snapTarget: null
     });
 
-    const startDrag = (itemId: string, startY: number) => {
+    const startDrag = useCallback((e: React.DragEvent, itemId: string) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', itemId);
+        // 透明な画像をドラッグ画像として設定
+        const img = new Image();
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        e.dataTransfer.setDragImage(img, 0, 0);
+
         setDragState({
             isDragging: true,
             draggedItemId: itemId,
-            dragStartY: startY,
-            dragCurrentY: startY,
+            dragStartY: e.clientY,
+            dragCurrentY: e.clientY,
             dragDelta: 0,
             snapTarget: null
         });
-    };
+    }, []);
 
-    const updateDrag = (currentY: number) => {
-        setDragState(prev => ({
-            ...prev,
-            dragCurrentY: currentY,
-            dragDelta: currentY - prev.dragStartY
-        }));
-    };
+    const updateDrag = useCallback((e: React.DragEvent) => {
+        if (dragState.isDragging) {
+            setDragState(prev => ({
+                ...prev,
+                dragCurrentY: e.clientY,
+                dragDelta: e.clientY - prev.dragStartY
+            }));
+        }
+    }, [dragState.isDragging, dragState.dragStartY]);
 
     const setSnapTarget = (target: string | null) => {
         setDragState(prev => ({ ...prev, snapTarget: target }));
     };
 
-    const endDrag = () => {
+    const endDrag = useCallback(() => {
         setDragState({
             isDragging: false,
             draggedItemId: null,
@@ -291,7 +302,7 @@ export const useDragState = () => {
             dragDelta: 0,
             snapTarget: null
         });
-    };
+    }, []);
 
     return {
         dragState,
