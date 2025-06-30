@@ -248,14 +248,31 @@ export function Timeline({
     if (e.clientY > 0) {
       updateDrag(e.clientY);
 
-      // スナップターゲットを計算
+      // スナップターゲットを計算（24時間対応）
       const deltaY = e.clientY - dragState.dragStartY;
       const timeShiftMinutes = Math.round(deltaY / 64 * 60); // 64px = 1時間
 
       if (draggedTask && Math.abs(timeShiftMinutes) >= 15) {
         const currentStartMinutes = parseInt(draggedTask.startTime.split(':')[0]) * 60 + parseInt(draggedTask.startTime.split(':')[1]);
-        const newStartMinutes = Math.round((currentStartMinutes + timeShiftMinutes) / 15) * 15;
-        const newStartTime = `${Math.floor(newStartMinutes / 60).toString().padStart(2, '0')}:${(newStartMinutes % 60).toString().padStart(2, '0')}`;
+        let newStartMinutes = currentStartMinutes + timeShiftMinutes;
+
+        // 24時間循環対応（6:00基準で24時間の範囲内に収める）
+        const baseSixAMMinutes = 6 * 60; // 6:00 = 360分
+        const maxMinutes = baseSixAMMinutes + (24 * 60); // 翌日6:00 = 1800分
+
+        // 範囲制限
+        if (newStartMinutes < baseSixAMMinutes) {
+          newStartMinutes = baseSixAMMinutes;
+        } else if (newStartMinutes >= maxMinutes) {
+          newStartMinutes = maxMinutes - 15; // 翌日5:45まで
+        }
+
+        // 15分単位にスナップ
+        newStartMinutes = Math.round(newStartMinutes / 15) * 15;
+
+        const newStartHour = Math.floor(newStartMinutes / 60) % 24;
+        const newStartMin = newStartMinutes % 60;
+        const newStartTime = `${newStartHour.toString().padStart(2, '0')}:${newStartMin.toString().padStart(2, '0')}`;
         setSnapTargetTime(newStartTime);
       } else {
         setSnapTargetTime(null);
@@ -289,54 +306,82 @@ export function Timeline({
     }
 
     try {
-      // 現在の時間を分に変換
+      // 新しい時間を計算（24時間対応）
       const currentStartMinutes = parseInt(draggedTask.startTime.split(':')[0]) * 60 + parseInt(draggedTask.startTime.split(':')[1]);
       const currentEndMinutes = parseInt(draggedTask.endTime.split(':')[0]) * 60 + parseInt(draggedTask.endTime.split(':')[1]);
-      const duration = currentEndMinutes - currentStartMinutes;
+      const duration = currentEndMinutes >= currentStartMinutes ?
+        currentEndMinutes - currentStartMinutes :
+        (24 * 60) - currentStartMinutes + currentEndMinutes; // 日をまたぐ場合
 
-      // 新しい開始時間を計算（15分単位で丸める）
-      const newStartMinutes = Math.max(6 * 60, Math.min(22 * 60,
-        Math.round((currentStartMinutes + timeShiftMinutes) / 15) * 15
-      ));
-      const newEndMinutes = newStartMinutes + duration;
+      let newStartMinutes = currentStartMinutes + timeShiftMinutes;
 
-      // 終了時間が23:00を超えないようにチェック
-      if (newEndMinutes > 23 * 60) {
-        setTaskLoading(draggedTask.id, 'error');
-        showToast('error', '時間範囲を超えています');
-        setTimeout(() => setTaskLoading(draggedTask.id, 'idle'), 2000);
-        return;
+      // 24時間循環対応（6:00基準）
+      const baseSixAMMinutes = 6 * 60; // 6:00 = 360分
+      const maxMinutes = baseSixAMMinutes + (24 * 60); // 翌日6:00 = 1800分
+
+      // 範囲制限
+      if (newStartMinutes < baseSixAMMinutes) {
+        newStartMinutes = baseSixAMMinutes;
+      } else if (newStartMinutes >= maxMinutes) {
+        newStartMinutes = maxMinutes - 15; // 翌日5:45まで
       }
 
-      // 時間を文字列形式に変換
-      const newStartTime = `${Math.floor(newStartMinutes / 60).toString().padStart(2, '0')}:${(newStartMinutes % 60).toString().padStart(2, '0')}`;
-      const newEndTime = `${Math.floor(newEndMinutes / 60).toString().padStart(2, '0')}:${(newEndMinutes % 60).toString().padStart(2, '0')}`;
+      // 15分単位にスナップ
+      newStartMinutes = Math.round(newStartMinutes / 15) * 15;
 
-      // タスクの時間を更新（非同期シミュレーション）
-      await new Promise(resolve => setTimeout(resolve, 800));
+      let newEndMinutes = newStartMinutes + duration;
 
-      onTaskUpdate(draggedTask.id, {
+      // 終了時間の調整
+      if (newEndMinutes >= maxMinutes) {
+        newEndMinutes = maxMinutes;
+      }
+
+      const newStartHour = Math.floor(newStartMinutes / 60) % 24;
+      const newStartMin = newStartMinutes % 60;
+      const newEndHour = Math.floor(newEndMinutes / 60) % 24;
+      const newEndMin = newEndMinutes % 60;
+
+      const newStartTime = `${newStartHour.toString().padStart(2, '0')}:${newStartMin.toString().padStart(2, '0')}`;
+      const newEndTime = `${newEndHour.toString().padStart(2, '0')}:${newEndMin.toString().padStart(2, '0')}`;
+
+      // タスクの更新（複数日タスク対応）
+      const updates: Partial<Task> = {
         startTime: newStartTime,
         endTime: newEndTime
-      });
+      };
+
+      // 日をまたぐかどうかチェック
+      if (newEndMinutes > (24 * 60) || newEndTime < newStartTime) {
+        updates.isMultiDay = true;
+        if (!draggedTask.endDate) {
+          const nextDay = addDays(currentDate, 1);
+          updates.endDate = format(nextDay, 'yyyy-MM-dd');
+        }
+      } else if (draggedTask.isMultiDay && newEndTime >= newStartTime) {
+        // 同日に収まる場合は複数日フラグを解除
+        updates.isMultiDay = false;
+        updates.endDate = undefined;
+      }
+
+      await onTaskUpdate(draggedTask.id, updates);
 
       // 成功状態
       setTaskLoading(draggedTask.id, 'success');
-      showToast('success', `「${draggedTask.title}」の時間を更新しました`);
-
-      setTimeout(() => setTaskLoading(draggedTask.id, 'idle'), 1500);
+      showToast('success', `「${draggedTask.title}」の時間を${newStartTime}-${newEndTime}に変更しました`);
+      setTimeout(() => setTaskLoading(draggedTask.id, 'idle'), 1000);
 
     } catch (error) {
       // エラー状態
       setTaskLoading(draggedTask.id, 'error');
-      showToast('error', 'タスクの更新に失敗しました');
+      showToast('error', 'タスクの時間変更に失敗しました');
       setTimeout(() => setTaskLoading(draggedTask.id, 'idle'), 2000);
-    } finally {
-      endDrag();
-      setDraggedTask(null);
-      setShowDragHelp(false);
-      setSnapTargetTime(null);
     }
+
+    // クリーンアップ
+    endDrag();
+    setDraggedTask(null);
+    setShowDragHelp(false);
+    setSnapTargetTime(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -368,8 +413,16 @@ export function Timeline({
     );
   }
 
-  // 🕐 時間軸の設定（6時〜23時）
-  const timeSlots = Array.from({ length: 18 }, (_, i) => 6 + i);
+  // 🕐 時間軸の設定（6時〜翌日6時の24時間表示）
+  const timeSlots = Array.from({ length: 24 }, (_, i) => {
+    const hour = (6 + i) % 24;
+    return {
+      hour,
+      displayHour: hour,
+      isNextDay: (6 + i) >= 24,
+      label: `${hour.toString().padStart(2, '0')}:00`
+    };
+  });
 
   return (
     <div className="relative min-h-screen">
@@ -385,18 +438,27 @@ export function Timeline({
 
             {/* 時間軸 */}
             <div className="relative">
-              {timeSlots.map((hour) => (
-                <div key={hour} className="relative h-16 border-b border-gray-100">
+              {timeSlots.map((timeSlot, index) => (
+                <div key={`${timeSlot.hour}-${index}`} className="relative h-16 border-b border-gray-100">
                   <div className="absolute top-0 left-0 w-full h-full flex items-start justify-center pt-1">
-                    <span className="text-sm font-medium text-gray-700 bg-white px-1 rounded">
-                      {hour.toString().padStart(2, '0')}:00
+                    <span className={`text-sm font-medium px-1 rounded ${timeSlot.isNextDay
+                      ? 'text-blue-600 bg-blue-50 border border-blue-200'
+                      : 'text-gray-700 bg-white'
+                      }`}>
+                      {timeSlot.label}
+                      {timeSlot.isNextDay && (
+                        <span className="text-xs text-blue-500 ml-1">+1</span>
+                      )}
                     </span>
                   </div>
 
                   {/* 30分マーク */}
                   <div className="absolute top-8 left-0 w-full flex items-center justify-center">
-                    <span className="text-xs text-gray-400 bg-white px-1">
-                      {hour.toString().padStart(2, '0')}:30
+                    <span className={`text-xs px-1 ${timeSlot.isNextDay
+                      ? 'text-blue-400 bg-blue-50'
+                      : 'text-gray-400 bg-white'
+                      }`}>
+                      {timeSlot.hour.toString().padStart(2, '0')}:30
                     </span>
                   </div>
 
@@ -406,7 +468,7 @@ export function Timeline({
                     const currentHour = now.getHours();
                     const currentMinutes = now.getMinutes();
 
-                    if (currentHour === hour) {
+                    if (currentHour === timeSlot.hour && !timeSlot.isNextDay) {
                       const position = (currentMinutes / 60) * 64; // 64px = h-16
                       return (
                         <div
@@ -425,6 +487,15 @@ export function Timeline({
                     }
                     return null;
                   })()}
+
+                  {/* 日付境界線（0:00の位置） */}
+                  {timeSlot.hour === 0 && timeSlot.isNextDay && (
+                    <div className="absolute top-0 left-0 w-full h-0.5 bg-blue-500 shadow-lg z-20">
+                      <div className="absolute left-4 -top-4 text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded shadow">
+                        翌日 00:00
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -497,10 +568,10 @@ export function Timeline({
             )}
           </div>
 
-          {/* タスク一覧 - 時間軸に沿って配置 */}
+          {/* タスク一覧 - 時間軸に沿って配置（24時間対応） */}
           <div
             className="relative pb-48"
-            style={{ height: `${18 * 64 + 192}px` }}
+            style={{ height: `${24 * 64 + 192}px` }}
             onDragOver={handleDragOver}
             onDrop={(e) => e.preventDefault()}
           >
@@ -518,32 +589,32 @@ export function Timeline({
               let displayStartTime = task.startTime;
               let displayEndTime = task.endTime;
 
-              if (taskSegments) {
-                const segment = taskSegments.find(s => s.task.id === task.id);
-                if (segment) {
-                  displayStartTime = segment.segmentStartTime;
-                  displayEndTime = segment.segmentEndTime;
-                }
+              if (task._isSegment && task._segment) {
+                displayStartTime = task._segment.segmentStartTime;
+                displayEndTime = task._segment.segmentEndTime;
               }
 
-              // タスクの時間位置を計算（セグメント時間を使用）
+              // 🕐 改良されたタスクの時間位置・高さ計算（24時間対応）
               const startHour = parseInt(displayStartTime.split(':')[0]);
               const startMinute = parseInt(displayStartTime.split(':')[1]);
               const endHour = parseInt(displayEndTime.split(':')[0]);
               const endMinute = parseInt(displayEndTime.split(':')[1]);
 
-              // 6時からの相対位置を計算
-              const topPosition = ((startHour - 6) * 64) + (startMinute / 60 * 64);
+              // 6時を基準とした時間位置計算（24時間循環対応）
+              const getTimePosition = (hour: number, minute: number) => {
+                let adjustedHour = hour;
+                if (hour < 6) {
+                  // 0-5時は翌日として扱う（6時基準で18-23時の位置）
+                  adjustedHour = hour + 24;
+                }
+                return ((adjustedHour - 6) * 64) + (minute / 60 * 64);
+              };
 
-              // 🌅 複数日タスクの場合、適切な高さを計算
-              let taskHeight;
-              if (endHour < startHour) {
-                // 翌日にまたがる場合（例：23:00-02:00の場合）
-                taskHeight = ((24 - startHour + endHour) * 64) + ((endMinute - startMinute) / 60 * 64);
-              } else {
-                // 通常の場合
-                taskHeight = ((endHour - startHour) * 64) + ((endMinute - startMinute) / 60 * 64);
-              }
+              const topPosition = getTimePosition(startHour, startMinute);
+              const endPosition = getTimePosition(endHour, endMinute);
+
+              // タスクの高さを正確に計算
+              const taskHeight = Math.max(endPosition - topPosition, 40); // 最小40px
 
               return (
                 <div
@@ -552,7 +623,7 @@ export function Timeline({
                     }`}
                   style={{
                     top: `${topPosition + 24}px`, // ヘッダー分のオフセット
-                    minHeight: `${Math.max(taskHeight, 40)}px`
+                    height: `${taskHeight}px`
                   }}
                   draggable={!editingTaskId && !editingTimeTaskId}
                   onDragStart={(e) => handleDragStart(e, task)}
@@ -581,7 +652,8 @@ export function Timeline({
                       }`}
                     style={{
                       height: `${Math.max(taskHeight - 8, 80)}px`,
-                      minHeight: '80px'
+                      minHeight: '80px',
+                      overflow: 'hidden' // 内容がはみ出さないように
                     }}
                   >
                     {/* 🎯 改良されたドラッグインジケーター */}
@@ -649,153 +721,151 @@ export function Timeline({
                       </button>
                     </div>
 
-                    {/* 時間表示と状態 */}
-                    <div className="flex items-center justify-between mb-3 ml-10">
-                      <div className="flex items-center space-x-3">
-                        {editingTimeTaskId === task.id ? (
+                    {/* コンテンツエリア（スクロール可能） */}
+                    <div className="h-full overflow-y-auto pr-2" style={{ paddingTop: '8px' }}>
+                      {/* 時間表示と状態 */}
+                      <div className="flex items-center justify-between mb-3 ml-10">
+                        <div className="flex items-center space-x-3">
+                          {editingTimeTaskId === task.id ? (
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="time"
+                                value={editingStartTime}
+                                onChange={(e) => setEditingStartTime(e.target.value)}
+                                onKeyDown={handleTimeKeyDown}
+                                className="text-sm font-medium bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-500">-</span>
+                              <input
+                                type="time"
+                                value={editingEndTime}
+                                onChange={(e) => setEditingEndTime(e.target.value)}
+                                onKeyDown={handleTimeKeyDown}
+                                className="text-sm font-medium bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <button
+                                onClick={saveTimeEdit}
+                                className="text-green-600 hover:text-green-700 p-1"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelTimeEditing}
+                                className="text-red-600 hover:text-red-700 p-1"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <div
+                              className={`text-sm font-medium cursor-pointer hover:text-blue-600 transition-colors group ${isActive ? 'text-green-700' :
+                                task.completed ? 'text-gray-500' :
+                                  isPast ? 'text-red-600' :
+                                    'text-gray-600'
+                                }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startTimeEditing(task);
+                              }}
+                            >
+                              {displayStartTime} - {displayEndTime}
+                              <span className="ml-2 opacity-0 group-hover:opacity-100 text-xs text-gray-400 transition-opacity">
+                                ⏰
+                              </span>
+                            </div>
+                          )}
+                          {isActive && (
+                            <span className="px-2 py-1 bg-green-600 text-white text-xs rounded-full font-medium animate-pulse">
+                              実行中
+                            </span>
+                          )}
+                          {isPast && !task.completed && (
+                            <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full font-medium">
+                              期限切れ
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* タスクタイトル */}
+                      <div className="mb-2">
+                        {editingTaskId === task.id ? (
                           <div className="flex items-center space-x-2">
+                            {task.emoji && <span className="text-lg">{task.emoji}</span>}
                             <input
-                              type="time"
-                              value={editingStartTime}
-                              onChange={(e) => setEditingStartTime(e.target.value)}
-                              onKeyDown={handleTimeKeyDown}
-                              className="text-sm font-medium bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-500">-</span>
-                            <input
-                              type="time"
-                              value={editingEndTime}
-                              onChange={(e) => setEditingEndTime(e.target.value)}
-                              onKeyDown={handleTimeKeyDown}
-                              className="text-sm font-medium bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              type="text"
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              onBlur={saveEdit}
+                              className="flex-1 text-lg font-semibold bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              autoFocus
                             />
                             <button
-                              onClick={saveTimeEdit}
+                              onClick={saveEdit}
                               className="text-green-600 hover:text-green-700 p-1"
                             >
                               ✓
                             </button>
                             <button
-                              onClick={cancelTimeEditing}
+                              onClick={cancelEditing}
                               className="text-red-600 hover:text-red-700 p-1"
                             >
                               ✕
                             </button>
                           </div>
                         ) : (
-                          <div
-                            className={`text-sm font-medium cursor-pointer hover:text-blue-600 transition-colors group ${isActive ? 'text-green-700' :
-                              task.completed ? 'text-gray-500' :
-                                isPast ? 'text-red-600' :
-                                  'text-gray-600'
-                              }`}
+                          <h3
+                            className={`text-lg font-semibold ${colors.text} cursor-pointer hover:text-blue-600 ${task.completed ? 'line-through opacity-60' : ''
+                              } transition-colors group`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              startTimeEditing(task);
+                              startEditing(task);
                             }}
                           >
-                            {displayStartTime} - {displayEndTime}
-                            <span className="ml-2 opacity-0 group-hover:opacity-100 text-xs text-gray-400 transition-opacity">
-                              ⏰
+                            {task.emoji && <span className="mr-2">{task.emoji}</span>}
+                            {/* 🌅 複数日タスクのラベル表示 */}
+                            {(() => {
+                              // taskSegmentsから該当するセグメントを見つける
+                              if (task._isSegment && task._segment) {
+                                return generateMultiDayTaskLabel(task._segment);
+                              }
+                              // 通常のタスクまたはセグメントが見つからない場合
+                              return task.title;
+                            })()}
+                            <span className="ml-2 opacity-0 group-hover:opacity-100 text-sm text-gray-400 transition-opacity">
+                              ✏️
                             </span>
-                          </div>
-                        )}
-                        {isActive && (
-                          <span className="px-2 py-1 bg-green-600 text-white text-xs rounded-full font-medium animate-pulse">
-                            実行中
-                          </span>
-                        )}
-                        {isPast && !task.completed && (
-                          <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full font-medium">
-                            期限切れ
-                          </span>
+                            {/* 🌅 複数日タスクのインジケーター */}
+                            {isMultiDayTask(task) && (
+                              <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                複数日
+                              </span>
+                            )}
+                          </h3>
                         )}
                       </div>
-                    </div>
 
-                    {/* タスクタイトル */}
-                    <div className="mb-2">
-                      {editingTaskId === task.id ? (
-                        <div className="flex items-center space-x-2">
-                          {task.emoji && <span className="text-lg">{task.emoji}</span>}
-                          <input
-                            type="text"
-                            value={editingTitle}
-                            onChange={(e) => setEditingTitle(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            onBlur={saveEdit}
-                            className="flex-1 text-lg font-semibold bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            autoFocus
-                          />
-                          <button
-                            onClick={saveEdit}
-                            className="text-green-600 hover:text-green-700 p-1"
-                          >
-                            ✓
-                          </button>
-                          <button
-                            onClick={cancelEditing}
-                            className="text-red-600 hover:text-red-700 p-1"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ) : (
-                        <h3
-                          className={`text-lg font-semibold ${colors.text} cursor-pointer hover:text-blue-600 ${task.completed ? 'line-through opacity-60' : ''
-                            } transition-colors group`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditing(task);
-                          }}
-                        >
-                          {task.emoji && <span className="mr-2">{task.emoji}</span>}
-                          {/* 🌅 複数日タスクのラベル表示 */}
-                          {(() => {
-                            // taskSegmentsから該当するセグメントを見つける
-                            if (taskSegments) {
-                              const segment = taskSegments.find(s => s.task.id === task.id);
-                              if (segment) {
-                                return generateMultiDayTaskLabel(segment);
-                              }
-                            }
-                            // 通常のタスクまたはセグメントが見つからない場合
-                            return task.title;
-                          })()}
-                          <span className="ml-2 opacity-0 group-hover:opacity-100 text-sm text-gray-400 transition-opacity">
-                            ✏️
-                          </span>
-                          {/* 🌅 複数日タスクのインジケーター */}
-                          {isMultiDayTask(task) && (
-                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                              複数日
-                            </span>
-                          )}
-                        </h3>
+                      {/* タスク説明 */}
+                      {task.description && (
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {task.description}
+                        </p>
                       )}
-                    </div>
 
-                    {/* タスク説明 */}
-                    {task.description && (
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                        {task.description}
-                      </p>
-                    )}
-
-                    {/* 🌅 複数日タスクの期間情報 */}
-                    {isMultiDayTask(task) && (
-                      <div className="flex items-center space-x-2 mb-3 text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-2">
-                        <ArrowRight className="w-4 h-4 text-blue-600" />
-                        <span>期間: {task.date}</span>
-                        {task.endDate && task.endDate !== task.date && (
-                          <>
-                            <ArrowRight className="w-3 h-3" />
-                            <span>{task.endDate}</span>
-                          </>
-                        )}
-                        {taskSegments && (() => {
-                          const segment = taskSegments.find(s => s.task.id === task.id);
-                          if (segment) {
+                      {/* 🌅 複数日タスクの期間情報 */}
+                      {isMultiDayTask(task) && (
+                        <div className="flex items-center space-x-2 mb-3 text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-2">
+                          <ArrowRight className="w-4 h-4 text-blue-600" />
+                          <span>期間: {task.date}</span>
+                          {task.endDate && task.endDate !== task.date && (
+                            <>
+                              <ArrowRight className="w-3 h-3" />
+                              <span>{task.endDate}</span>
+                            </>
+                          )}
+                          {task._isSegment && task._segment && (() => {
+                            const segment = task._segment;
                             if (segment.isFirstDay && !segment.isLastDay) {
                               return <span className="text-blue-700 font-medium">開始日</span>;
                             } else if (segment.isLastDay && !segment.isFirstDay) {
@@ -803,51 +873,53 @@ export function Timeline({
                             } else if (!segment.isFirstDay && !segment.isLastDay) {
                               return <span className="text-blue-700 font-medium">継続中</span>;
                             }
-                          }
-                          return null;
-                        })()}
-                      </div>
-                    )}
-
-                    {/* サブタスク */}
-                    {task.subtasks && task.subtasks.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          サブタスク
+                            return null;
+                          })()}
                         </div>
-                        <div className="space-y-1">
-                          {task.subtasks.slice(0, 3).map((subtask: any) => (
-                            <div key={subtask.id} className="flex items-center space-x-2 text-sm">
-                              <div className={`w-1.5 h-1.5 rounded-full ${subtask.completed ? colors.dot : 'bg-gray-300'
-                                }`} />
-                              <span className={subtask.completed ? 'line-through text-gray-500' : 'text-gray-700'}>
-                                {subtask.title}
-                              </span>
-                            </div>
-                          ))}
-                          {task.subtasks.length > 3 && (
-                            <div className="text-xs text-gray-500 ml-3.5">
-                              他 {task.subtasks.length - 3} 件
+                      )}
+
+                      {/* サブタスク（短縮表示） */}
+                      {task.subtasks && task.subtasks.length > 0 && taskHeight > 120 && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            サブタスク
+                          </div>
+                          <div className="space-y-1">
+                            {task.subtasks.slice(0, Math.min(3, Math.floor((taskHeight - 120) / 20))).map((subtask: any) => (
+                              <div key={subtask.id} className="flex items-center space-x-2 text-sm">
+                                <div className={`w-1.5 h-1.5 rounded-full ${subtask.completed ? colors.dot : 'bg-gray-300'
+                                  }`} />
+                                <span className={subtask.completed ? 'line-through text-gray-500' : 'text-gray-700'}>
+                                  {subtask.title}
+                                </span>
+                              </div>
+                            ))}
+                            {task.subtasks.length > 3 && (
+                              <div className="text-xs text-gray-500 ml-3.5">
+                                他 {task.subtasks.length - 3} 件
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 詳細プログレスバー（高さに余裕がある場合のみ） */}
+                      {taskHeight > 160 && (
+                        <div className="mt-4">
+                          <LinearProgress
+                            task={task}
+                            height="h-2"
+                            showLabel={true}
+                            className="mb-2"
+                          />
+
+                          {/* 達成度メトリクス */}
+                          {task.subtasks && task.subtasks.length > 0 && (
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>{task.subtasks.filter((st: any) => st.completed).length} / {task.subtasks.length} サブタスク完了</span>
+                              <span className="font-medium">{Math.round(calculateTaskProgress(task))}% 達成</span>
                             </div>
                           )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 詳細プログレスバー */}
-                    <div className="mt-4">
-                      <LinearProgress
-                        task={task}
-                        height="h-2"
-                        showLabel={true}
-                        className="mb-2"
-                      />
-
-                      {/* 達成度メトリクス */}
-                      {task.subtasks && task.subtasks.length > 0 && (
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>{task.subtasks.filter((st: any) => st.completed).length} / {task.subtasks.length} サブタスク完了</span>
-                          <span className="font-medium">{Math.round(calculateTaskProgress(task))}% 達成</span>
                         </div>
                       )}
                     </div>
@@ -859,25 +931,31 @@ export function Timeline({
         </div>
       </div>
 
-      {/* 🎭 ドラッグガイドライン（15分間隔） */}
+      {/* 🎭 ドラッグガイドライン（15分間隔・24時間対応） */}
       {dragState.isDragging && snapTargetTime && (
         <>
-          {Array.from({ length: 18 }, (_, i) => 6 + i).map(hour =>
-            [0, 15, 30, 45].map(minute => {
+          {Array.from({ length: 24 }, (_, i) => {
+            const hour = (6 + i) % 24;
+            return [0, 15, 30, 45].map(minute => {
               const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-              const yPosition = ((hour - 6) * 64) + (minute / 60 * 64) + 24;
+              // 24時間対応の位置計算
+              let adjustedHour = hour;
+              if (hour < 6) {
+                adjustedHour = hour + 24;
+              }
+              const yPosition = ((adjustedHour - 6) * 64) + (minute / 60 * 64) + 24;
 
               return (
                 <DragGuideline
-                  key={timeSlot}
+                  key={`${timeSlot}-${i}`}
                   visible={true}
                   timeSlot={timeSlot}
                   yPosition={yPosition}
                   isDragTarget={timeSlot === snapTargetTime}
                 />
               );
-            })
-          ).flat()}
+            });
+          }).flat()}
         </>
       )}
 
@@ -894,7 +972,7 @@ export function Timeline({
       {/* 📱 ドラッグヘルプメッセージ */}
       <DragHelpMessage
         visible={showDragHelp}
-        message="📅 縦にドラッグして時間を変更（15分単位で自動調整）"
+        message="📅 縦にドラッグして時間を変更（15分単位・24時間対応）"
         icon="time"
       />
 
