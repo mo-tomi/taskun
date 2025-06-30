@@ -13,10 +13,10 @@ interface TimelineProps {
   onTaskDelete: (id: string) => void;
 }
 
-export function Timeline({ 
-  tasks, 
+export function Timeline({
+  tasks,
   currentDate,
-  onTaskComplete, 
+  onTaskComplete,
   onTaskFocus
 }: TimelineProps) {
   // タスクを開始時間順にソート
@@ -54,22 +54,22 @@ export function Timeline({
     <div className="relative">
       {/* 縦のタイムライン */}
       <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200" />
-      
+
       <div className="space-y-6">
         {sortedTasks.map((task, index) => {
           const colors = getTaskColor(task);
-          
+
           return (
             <div key={task.id} className="relative flex items-start space-x-4">
               {/* タイムライン上の点 */}
               <div className="relative z-10 flex-shrink-0">
                 <div className={`w-3 h-3 rounded-full ${colors.dot} border-2 border-white shadow-sm`} />
               </div>
-              
+
               {/* タスクカード */}
-              <div className={`flex-1 min-w-0 ${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
-                   onClick={() => onTaskFocus(task)}>
-                
+              {/* ポモドーロタイマー機能を無効化: onClick={() => onTaskFocus(task)} */}
+              <div className={`flex-1 min-w-0 ${colors.bg} ${colors.border} border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}>
+
                 {/* 時間表示 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="text-sm font-medium text-gray-600">
@@ -80,31 +80,29 @@ export function Timeline({
                       e.stopPropagation();
                       onTaskComplete(task.id);
                     }}
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      task.completed 
-                        ? `${colors.dot} border-transparent text-white` 
-                        : `border-gray-300 hover:border-gray-400`
-                    } transition-colors`}
+                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${task.completed
+                      ? `${colors.dot} border-transparent text-white`
+                      : `border-gray-300 hover:border-gray-400`
+                      } transition-colors`}
                   >
                     {task.completed && <Check className="w-3 h-3" />}
                   </button>
                 </div>
-                
+
                 {/* タスクタイトル */}
-                <h3 className={`text-lg font-semibold ${colors.text} mb-2 ${
-                  task.completed ? 'line-through opacity-60' : ''
-                }`}>
+                <h3 className={`text-lg font-semibold ${colors.text} mb-2 ${task.completed ? 'line-through opacity-60' : ''
+                  }`}>
                   {task.emoji && <span className="mr-2">{task.emoji}</span>}
                   {task.title}
                 </h3>
-                
+
                 {/* タスク説明 */}
                 {task.description && (
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                     {task.description}
                   </p>
                 )}
-                
+
                 {/* サブタスク */}
                 {task.subtasks && task.subtasks.length > 0 && (
                   <div className="space-y-2">
@@ -114,9 +112,8 @@ export function Timeline({
                     <div className="space-y-1">
                       {task.subtasks.slice(0, 3).map((subtask) => (
                         <div key={subtask.id} className="flex items-center space-x-2 text-sm">
-                          <div className={`w-1.5 h-1.5 rounded-full ${
-                            subtask.completed ? colors.dot : 'bg-gray-300'
-                          }`} />
+                          <div className={`w-1.5 h-1.5 rounded-full ${subtask.completed ? colors.dot : 'bg-gray-300'
+                            }`} />
                           <span className={subtask.completed ? 'line-through text-gray-500' : 'text-gray-700'}>
                             {subtask.title}
                           </span>
@@ -130,7 +127,7 @@ export function Timeline({
                     </div>
                   </div>
                 )}
-                
+
                 {/* プログレスバー */}
                 {task.subtasks && task.subtasks.length > 0 && (
                   <div className="mt-4">
@@ -139,10 +136,10 @@ export function Timeline({
                       <span>{Math.round((task.subtasks.filter(st => st.completed).length / task.subtasks.length) * 100)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5">
-                      <div 
+                      <div
                         className={`h-1.5 rounded-full ${colors.dot.replace('bg-', 'bg-').replace('-400', '-500')} transition-all duration-300`}
-                        style={{ 
-                          width: `${(task.subtasks.filter(st => st.completed).length / task.subtasks.length) * 100}%` 
+                        style={{
+                          width: `${(task.subtasks.filter(st => st.completed).length / task.subtasks.length) * 100}%`
                         }}
                       />
                     </div>

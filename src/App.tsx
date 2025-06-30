@@ -55,7 +55,8 @@ function App() {
   };
 
   const handleTaskFocus = (task: Task) => {
-    setFocusTask(task);
+    // ポモドーロタイマー機能を無効化
+    // setFocusTask(task);
   };
 
   const handleUpdateSubtask = (taskId: string, subtaskId: string, completed: boolean) => {
@@ -85,7 +86,7 @@ function App() {
         <div className="p-6 border-b border-gray-200">
           <h1 className="text-xl font-semibold text-gray-900">受信トレイ</h1>
         </div>
-        
+
         {/* タスクリスト */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {tasks.map((task) => (
@@ -94,14 +95,13 @@ function App() {
               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer group"
             >
               <div className="flex items-center space-x-3">
-                <div className={`w-3 h-3 rounded-full ${
-                  task.color === 'coral' ? 'bg-red-400' :
+                <div className={`w-3 h-3 rounded-full ${task.color === 'coral' ? 'bg-red-400' :
                   task.color === 'blue' ? 'bg-blue-400' :
-                  task.color === 'green' ? 'bg-green-400' :
-                  task.color === 'purple' ? 'bg-purple-400' :
-                  task.color === 'orange' ? 'bg-orange-400' :
-                  'bg-teal-400'
-                }`} />
+                    task.color === 'green' ? 'bg-green-400' :
+                      task.color === 'purple' ? 'bg-purple-400' :
+                        task.color === 'orange' ? 'bg-orange-400' :
+                          'bg-teal-400'
+                  }`} />
                 <div>
                   <div className="text-sm font-medium text-gray-900">{task.title}</div>
                   <div className="text-xs text-gray-500">{task.startTime} - {task.endTime}</div>
@@ -115,7 +115,7 @@ function App() {
               </button>
             </div>
           ))}
-          
+
           {/* 新規タスク追加ボタン */}
           <button
             onClick={() => setIsQuickAddOpen(true)}
@@ -185,28 +185,26 @@ function App() {
               </button>
             </div>
           </div>
-          
+
           {/* 週間カレンダー */}
           <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: 7 }, (_, i) => {
               const date = addDays(subDays(currentDate, currentDate.getDay()), i);
               const isSelected = format(date, 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd');
               const dayTasks = getTasksForDate(format(date, 'yyyy-MM-dd'));
-              
+
               return (
                 <div
                   key={i}
-                  className={`p-3 text-center rounded-lg cursor-pointer ${
-                    isSelected ? 'bg-red-100 text-red-600' : 'hover:bg-gray-100'
-                  }`}
+                  className={`p-3 text-center rounded-lg cursor-pointer ${isSelected ? 'bg-red-100 text-red-600' : 'hover:bg-gray-100'
+                    }`}
                   onClick={() => setCurrentDate(date)}
                 >
                   <div className="text-xs text-gray-500 mb-1">
                     {format(date, 'E')}
                   </div>
-                  <div className={`text-lg font-semibold ${
-                    isSelected ? 'text-red-600' : 'text-gray-900'
-                  }`}>
+                  <div className={`text-lg font-semibold ${isSelected ? 'text-red-600' : 'text-gray-900'
+                    }`}>
                     {format(date, 'd')}
                   </div>
                   <div className="text-xs text-gray-400">

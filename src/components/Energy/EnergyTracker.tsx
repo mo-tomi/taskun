@@ -138,6 +138,7 @@ export function EnergyTracker({
                   {currentTask.startTime} - {currentTask.endTime}
                 </div>
               </div>
+              {/* ポモドーロタイマー機能を無効化
               {onTaskFocus && (
                 <button
                   onClick={() => onTaskFocus(currentTask)}
@@ -148,6 +149,7 @@ export function EnergyTracker({
                   <span className="hidden sm:inline">フォーカス</span>
                 </button>
               )}
+              */}
             </div>
           </div>
         )}
@@ -165,6 +167,7 @@ export function EnergyTracker({
                   {nextTask.startTime} 開始予定
                 </div>
               </div>
+              {/* ポモドーロタイマー機能を無効化
               {onTaskFocus && (
                 <button
                   onClick={() => onTaskFocus(nextTask)}
@@ -174,6 +177,7 @@ export function EnergyTracker({
                   準備
                 </button>
               )}
+              */}
             </div>
           </div>
         )}

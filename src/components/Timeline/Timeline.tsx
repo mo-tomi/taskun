@@ -512,7 +512,8 @@ export function Timeline({
                       height: `${Math.max(taskHeight - 8, 80)}px`,
                       minHeight: '80px'
                     }}
-                    onClick={() => onTaskFocus(task)}
+                  // ポモドーロタイマー機能を無効化
+                  // onClick={() => onTaskFocus(task)}
                   >
                     {/* 🎯 改良されたドラッグインジケーター */}
                     <DragIndicator
