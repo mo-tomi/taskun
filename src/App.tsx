@@ -291,17 +291,10 @@ function App() {
 
         {/* タイムライン */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* 🌅 複数日対応タイムライン */}
-          <TimelineMultiDay
-            taskSegments={todayTaskSegments}
-            currentDate={currentDate}
-            onTaskComplete={completeTask}
-            onTaskUpdate={updateTask}
-          />
-
-          {/* 従来のタイムライン（バックアップとして残す） */}
-          {/* <Timeline
+          {/* 🌅 複数日対応の従来タイムライン */}
+          <Timeline
             tasks={todayTasks}
+            taskSegments={todayTaskSegments}
             currentDate={currentDate}
             onTaskComplete={completeTask}
             onTaskEdit={handleTaskEdit}
@@ -309,7 +302,7 @@ function App() {
             onTaskReplan={replanTask}
             onTaskDelete={deleteTask}
             onTaskUpdate={updateTask}
-          /> */}
+          />
         </div>
       </div>
 

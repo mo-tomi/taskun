@@ -1,10 +1,15 @@
-import { Task } from '../../types';
+import { Task, MultiDayTaskSegment } from '../../types';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Check, Clock, MoreHorizontal, Play, Pause } from 'lucide-react';
+import { Check, Clock, MoreHorizontal, Play, Pause, ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ProgressGauge, LinearProgress } from './ProgressGauge';
 import { calculateTaskProgress } from '../../utils/timeUtils';
+import {
+  generateMultiDayTaskLabel,
+  isMultiDayTask,
+  getMultiDayTaskStyle
+} from '../../utils/multiDayTaskUtils';
 
 // 🎯 ローディング状態とドラッグ体験のコンポーネントをインポート
 import { TaskLoadingOverlay, ToastNotification, LoadingState } from '../ui/LoadingState';
@@ -18,6 +23,7 @@ import {
 
 interface TimelineProps {
   tasks: Task[];
+  taskSegments?: MultiDayTaskSegment[]; // 🌅 複数日タスクセグメント（オプション）
   currentDate: Date;
   onTaskComplete: (id: string) => void;
   onTaskEdit: (task: Task) => void;
@@ -29,6 +35,7 @@ interface TimelineProps {
 
 export function Timeline({
   tasks,
+  taskSegments,
   currentDate,
   onTaskComplete,
   onTaskFocus,
@@ -681,10 +688,20 @@ export function Timeline({
                           }}
                         >
                           {task.emoji && <span className="mr-2">{task.emoji}</span>}
-                          {task.title}
+                          {/* 🌅 複数日タスクのラベル表示 */}
+                          {taskSegments ? (() => {
+                            const segment = taskSegments.find(s => s.task.id === task.id);
+                            return segment ? generateMultiDayTaskLabel(segment) : task.title;
+                          })() : task.title}
                           <span className="ml-2 opacity-0 group-hover:opacity-100 text-sm text-gray-400 transition-opacity">
                             ✏️
                           </span>
+                          {/* 🌅 複数日タスクのインジケーター */}
+                          {isMultiDayTask(task) && (
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                              複数日
+                            </span>
+                          )}
                         </h3>
                       )}
                     </div>
@@ -694,6 +711,33 @@ export function Timeline({
                       <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                         {task.description}
                       </p>
+                    )}
+
+                    {/* 🌅 複数日タスクの期間情報 */}
+                    {isMultiDayTask(task) && (
+                      <div className="flex items-center space-x-2 mb-3 text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-2">
+                        <ArrowRight className="w-4 h-4 text-blue-600" />
+                        <span>期間: {task.date}</span>
+                        {task.endDate && task.endDate !== task.date && (
+                          <>
+                            <ArrowRight className="w-3 h-3" />
+                            <span>{task.endDate}</span>
+                          </>
+                        )}
+                        {taskSegments && (() => {
+                          const segment = taskSegments.find(s => s.task.id === task.id);
+                          if (segment) {
+                            if (segment.isFirstDay && !segment.isLastDay) {
+                              return <span className="text-blue-700 font-medium">開始日</span>;
+                            } else if (segment.isLastDay && !segment.isFirstDay) {
+                              return <span className="text-blue-700 font-medium">終了日</span>;
+                            } else if (!segment.isFirstDay && !segment.isLastDay) {
+                              return <span className="text-blue-700 font-medium">継続中</span>;
+                            }
+                          }
+                          return null;
+                        })()}
+                      </div>
                     )}
 
                     {/* サブタスク */}
