@@ -177,30 +177,40 @@ export function Timeline({
     setToastState(prev => ({ ...prev, visible: false }));
   };
 
-  // 🎭 ドラッグ操作ハンドラ（改良版）
+  // 🎭 改良されたドラッグアンドドロップ機能
   const handleDragStart = (e: React.DragEvent, task: Task) => {
-    startDrag(e, task.id);
     setDraggedTask(task);
+    startDrag(task.id, e.clientY);
     setShowDragHelp(true);
-    // 他の要素へのドロップを許可
+
+    // ドラッグ中の視覚効果
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', task.id);
+
+    // カスタムドラッグイメージ
+    const dragImage = document.createElement('div');
+    dragImage.style.opacity = '0';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    setTimeout(() => document.body.removeChild(dragImage), 0);
   };
 
   const handleDrag = (e: React.DragEvent) => {
-    updateDrag(e);
+    if (e.clientY > 0) {
+      updateDrag(e.clientY);
 
-    // 15分単位のスナップ計算
-    if (draggedTask) {
+      // スナップターゲットを計算
       const deltaY = e.clientY - dragState.dragStartY;
       const timeShiftMinutes = Math.round(deltaY / 64 * 60); // 64px = 1時間
-      const currentStartMinutes = parseInt(draggedTask.startTime.split(':')[0]) * 60 + parseInt(draggedTask.startTime.split(':')[1]);
-      const newStartMinutesRaw = currentStartMinutes + timeShiftMinutes;
-      const newStartMinutes = Math.round(newStartMinutesRaw / 15) * 15;
 
-      const newStartHour = Math.floor(newStartMinutes / 60);
-      const newStartMin = newStartMinutes % 60;
-
-      setSnapTargetTime(`${String(newStartHour).padStart(2, '0')}:${String(newStartMin).padStart(2, '0')}`);
+      if (draggedTask && Math.abs(timeShiftMinutes) >= 15) {
+        const currentStartMinutes = parseInt(draggedTask.startTime.split(':')[0]) * 60 + parseInt(draggedTask.startTime.split(':')[1]);
+        const newStartMinutes = Math.round((currentStartMinutes + timeShiftMinutes) / 15) * 15;
+        const newStartTime = `${Math.floor(newStartMinutes / 60).toString().padStart(2, '0')}:${(newStartMinutes % 60).toString().padStart(2, '0')}`;
+        setSnapTargetTime(newStartTime);
+      } else {
+        setSnapTargetTime(null);
+      }
     }
   };
 
@@ -253,18 +263,24 @@ export function Timeline({
       const newStartTime = `${Math.floor(newStartMinutes / 60).toString().padStart(2, '0')}:${(newStartMinutes % 60).toString().padStart(2, '0')}`;
       const newEndTime = `${Math.floor(newEndMinutes / 60).toString().padStart(2, '0')}:${(newEndMinutes % 60).toString().padStart(2, '0')}`;
 
-      // 非同期更新をシミュレート
-      await new Promise(res => setTimeout(res, 400));
+      // タスクの時間を更新（非同期シミュレーション）
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      onTaskUpdate(draggedTask.id, { startTime: newStartTime, endTime: newEndTime });
+      onTaskUpdate(draggedTask.id, {
+        startTime: newStartTime,
+        endTime: newEndTime
+      });
 
+      // 成功状態
       setTaskLoading(draggedTask.id, 'success');
-      showToast('success', 'タスクの時間を変更しました');
-      setTimeout(() => setTaskLoading(draggedTask.id, 'idle'), 1000);
+      showToast('success', `「${draggedTask.title}」の時間を更新しました`);
+
+      setTimeout(() => setTaskLoading(draggedTask.id, 'idle'), 1500);
 
     } catch (error) {
+      // エラー状態
       setTaskLoading(draggedTask.id, 'error');
-      showToast('error', '時間の変更に失敗しました');
+      showToast('error', 'タスクの更新に失敗しました');
       setTimeout(() => setTaskLoading(draggedTask.id, 'idle'), 2000);
     } finally {
       endDrag();
@@ -276,9 +292,7 @@ export function Timeline({
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    if (dragState.isDragging) {
-      handleDrag(e);
-    }
+    e.dataTransfer.dropEffect = 'move';
   };
 
   const getTaskColor = (task: Task) => {
@@ -775,8 +789,8 @@ export function Timeline({
       <ToastNotification
         state={toastState.state}
         message={toastState.message}
-        visible={toastState.visible}
-        onClose={hideToast}
+        onDismiss={hideToast}
+        autoHideDuration={3000}
       />
     </div>
   );

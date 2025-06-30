@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Icon } from './Icon';
+import React from 'react';
+import { Check, AlertCircle, RotateCw } from 'lucide-react';
 
 // 🎯 ローディング状態の型定義
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
@@ -14,33 +13,59 @@ export interface LoadingStateProps {
 }
 
 // 🎨 ローディングスピナーコンポーネント
-export const LoadingSpinner = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
+export const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: string }> = ({
+    size = 'md',
+    className = ''
+}) => {
     const sizeClasses = {
-        sm: 'w-5 h-5 border-2',
-        md: 'w-8 h-8 border-4',
-        lg: 'w-12 h-12 border-4',
+        sm: 'w-4 h-4',
+        md: 'w-6 h-6',
+        lg: 'w-8 h-8'
     };
+
     return (
-        <div
-            className={`animate-spin rounded-full border-primary border-t-transparent ${sizeClasses[size]}`}
-            role="status"
+        <RotateCw
+            className={`${sizeClasses[size]} animate-spin text-blue-600 ${className}`}
+            strokeWidth={2}
         />
     );
 };
 
 // 🎯 成功アイコンコンポーネント
-export const SuccessIcon = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => (
-    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
-        <Icon name="CheckCircle2" size={size} color="success" />
-    </motion.div>
-);
+export const SuccessIcon: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: string }> = ({
+    size = 'md',
+    className = ''
+}) => {
+    const sizeClasses = {
+        sm: 'w-4 h-4',
+        md: 'w-6 h-6',
+        lg: 'w-8 h-8'
+    };
+
+    return (
+        <div className={`${sizeClasses[size]} bg-green-500 rounded-full flex items-center justify-center animate-scale-in ${className}`}>
+            <Check className="w-3/4 h-3/4 text-white" strokeWidth={3} />
+        </div>
+    );
+};
 
 // ❌ エラーアイコンコンポーネント  
-export const ErrorIcon = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => (
-    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
-        <Icon name="XCircle" size={size} color="error" />
-    </motion.div>
-);
+export const ErrorIcon: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: string }> = ({
+    size = 'md',
+    className = ''
+}) => {
+    const sizeClasses = {
+        sm: 'w-4 h-4',
+        md: 'w-6 h-6',
+        lg: 'w-8 h-8'
+    };
+
+    return (
+        <div className={`${sizeClasses[size]} bg-red-500 rounded-full flex items-center justify-center animate-scale-in ${className}`}>
+            <AlertCircle className="w-3/4 h-3/4 text-white" strokeWidth={2} />
+        </div>
+    );
+};
 
 // 🎭 メインのローディング状態コンポーネント
 export const LoadingStateDisplay: React.FC<LoadingStateProps> = ({
@@ -106,71 +131,103 @@ export interface TaskLoadingOverlayProps {
     className?: string;
 }
 
-export const TaskLoadingOverlay = ({ state, taskTitle = 'タスク', className = '' }: TaskLoadingOverlayProps) => (
-    <AnimatePresence>
-        {state !== 'idle' && (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className={`absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-30 p-4 ${className}`}
-            >
-                {state === 'loading' && <LoadingSpinner size="md" />}
-                {state === 'success' && <SuccessIcon size="lg" />}
-                {state === 'error' && <ErrorIcon size="lg" />}
-                <p className="mt-3 text-sm font-semibold text-center text-foreground">
-                    {state === 'loading' && `「${taskTitle}」を更新中...`}
-                    {state === 'success' && `「${taskTitle}」を更新しました！`}
-                    {state === 'error' && `更新に失敗しました`}
-                </p>
-            </motion.div>
-        )}
-    </AnimatePresence>
-);
+export const TaskLoadingOverlay: React.FC<TaskLoadingOverlayProps> = ({
+    state,
+    taskTitle,
+    className = ''
+}) => {
+    if (state === 'idle') return null;
+
+    const getMessage = () => {
+        switch (state) {
+            case 'loading':
+                return `「${taskTitle}」を更新中...`;
+            case 'success':
+                return `「${taskTitle}」を更新しました`;
+            case 'error':
+                return `更新に失敗しました`;
+            default:
+                return '';
+        }
+    };
+
+    return (
+        <div className={`
+      absolute inset-0 
+      bg-white/90 backdrop-blur-sm 
+      rounded-lg 
+      flex items-center justify-center 
+      z-30
+      animate-fade-in
+      ${className}
+    `}>
+            <div className="text-center p-4">
+                <LoadingStateDisplay
+                    state={state}
+                    message={getMessage()}
+                    size="md"
+                />
+            </div>
+        </div>
+    );
+};
 
 // 🎯 フローティングトースト通知
 export interface ToastNotificationProps {
     state: LoadingState;
     message: string;
-    visible: boolean;
-    onClose: () => void;
+    onDismiss?: () => void;
+    autoHideDuration?: number;
 }
 
-export const ToastNotification = ({ state, message, visible, onClose }: ToastNotificationProps) => {
-    useEffect(() => {
-        if (visible) {
-            const timer = setTimeout(onClose, 3000);
+export const ToastNotification: React.FC<ToastNotificationProps> = ({
+    state,
+    message,
+    onDismiss,
+    autoHideDuration = 3000
+}) => {
+    React.useEffect(() => {
+        if (state === 'success' && autoHideDuration > 0) {
+            const timer = setTimeout(() => {
+                onDismiss?.();
+            }, autoHideDuration);
             return () => clearTimeout(timer);
         }
-    }, [visible, onClose]);
+    }, [state, autoHideDuration, onDismiss]);
 
-    const iconMap = {
-        success: <Icon name="CheckCircle2" color="success" size="lg" />,
-        error: <Icon name="AlertTriangle" color="error" size="lg" />,
-        loading: <LoadingSpinner size="sm" />,
-        idle: null,
-    };
+    if (state === 'idle') return null;
+
+    const bgClasses = {
+        loading: 'bg-blue-500',
+        success: 'bg-green-500',
+        error: 'bg-red-500'
+    }[state] || 'bg-gray-500';
 
     return (
-        <AnimatePresence>
-            {visible && state !== 'idle' && (
-                <motion.div
-                    initial={{ opacity: 0, y: 50, scale: 0.3 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-                    className="fixed bottom-5 right-5 w-full max-w-sm p-4 rounded-xl bg-white shadow-2xl border border-border z-50 flex items-start space-x-4"
-                    role="alert"
+        <div className={`
+      fixed top-4 right-4 
+      ${bgClasses} text-white 
+      px-4 py-3 rounded-lg shadow-lg 
+      flex items-center space-x-3
+      animate-slide-up
+      z-50
+      max-w-sm
+    `}>
+            <LoadingStateDisplay
+                state={state}
+                size="sm"
+                inline
+            />
+            <span className="font-medium flex-1">{message}</span>
+            {onDismiss && (
+                <button
+                    onClick={onDismiss}
+                    className="text-white/80 hover:text-white ml-2"
                 >
-                    <div className="flex-shrink-0 pt-1">{iconMap[state]}</div>
-                    <div className="flex-1">
-                        <p className="font-semibold text-foreground">{message}</p>
-                    </div>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-neutral-100">
-                        <Icon name="X" size="sm" color="neutral" />
-                    </button>
-                </motion.div>
+                    ×
+                </button>
             )}
-        </AnimatePresence>
+        </div>
     );
 };
 

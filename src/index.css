@@ -134,77 +134,686 @@
     --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
     /* グラデーション */
-    --gradient-primary: linear-gradient(135deg, rgb(var(--primary-light)) 0%, rgb(var(--primary-dark)) 100%);
-    --gradient-secondary: linear-gradient(135deg, rgb(var(--secondary-light)) 0%, rgb(var(--secondary-dark)) 100%);
-    --gradient-accent: linear-gradient(135deg, rgb(var(--accent-light)) 0%, rgb(var(--accent-dark)) 100%);
-    --gradient-surface: linear-gradient(135deg, rgb(var(--surface)) 0%, rgb(var(--surface-variant)) 100%);
-  }
+    --gradient-primary: linear-gradient(135deg,
+        rgb(var(--primary)) 0%,
+        rgb(var(--primary-light)) 100%);
+    --gradient-secondary: linear-gradient(135deg,
+        rgb(var(--secondary)) 0%,
+        rgb(var(--secondary-light)) 100%);
+    --gradient-accent: linear-gradient(135deg,
+        rgb(var(--accent)) 0%,
+        rgb(var(--accent-light)) 100%);
+    --gradient-surface: linear-gradient(135deg,
+        rgb(var(--surface)) 0%,
+        rgb(var(--surface-variant)) 100%);
 
-  /* 🌑 Dark Mode Color Palette */
-  html.dark {
-    --background: 15 23 42;
-    /* #0f172a - deep dark blue */
-    --surface: 30 41 59;
-    /* #1e293b - rich dark slate */
-    --surface-variant: 51 65 85;
-    /* #334155 - slate gray */
-    --foreground: 226 232 240;
-    /* #e2e8f0 - light slate gray */
+    /* タイポグラフィ強化 */
+    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
 
-    --card: 30 41 59;
-    /* #1e293b */
-    --card-foreground: 226 232 240;
-    /* #e2e8f0 */
-    --card-border: 71 85 105;
-    /* #475569 */
+    /* タイポグラフィスケール（1.25比率） */
+    --text-xs: 0.75rem;
+    /* 12px */
+    --text-sm: 0.875rem;
+    /* 14px */
+    --text-base: 1rem;
+    /* 16px */
+    --text-lg: 1.125rem;
+    /* 18px */
+    --text-xl: 1.25rem;
+    /* 20px */
+    --text-2xl: 1.5rem;
+    /* 24px */
+    --text-3xl: 1.875rem;
+    /* 30px */
+    --text-4xl: 2.25rem;
+    /* 36px */
+    --text-5xl: 3rem;
+    /* 48px */
+    --text-6xl: 3.75rem;
+    /* 60px */
 
-    /* Primary colors are often brightened in dark mode */
-    --primary: 96 165 250;
-    /* #60a5fa - soft blue */
-    --primary-light: 147 197 253;
-    /* #93c5fd */
-    --primary-dark: 59 130 246;
-    /* #3b82f6 */
-    --primary-foreground: 15 23 42;
-    /* #0f172a */
+    /* 行高（Leading） */
+    --leading-none: 1;
+    --leading-tight: 1.25;
+    --leading-snug: 1.375;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+    --leading-loose: 2;
 
-    /* Secondary colors */
-    --secondary: 196 181 253;
-    /* #c4b5fd - soft purple */
-    --secondary-light: 221 214 254;
-    /* #ddd6fe */
-    --secondary-dark: 167 139 250;
-    /* #a78bfa */
-    --secondary-foreground: 30 41 59;
-    /* #1e293b */
+    /* 間隔システム（8ptグリッド） */
+    --space-0: 0;
+    --space-1: 0.25rem;
+    /* 4px */
+    --space-2: 0.5rem;
+    /* 8px */
+    --space-3: 0.75rem;
+    /* 12px */
+    --space-4: 1rem;
+    /* 16px */
+    --space-5: 1.25rem;
+    /* 20px */
+    --space-6: 1.5rem;
+    /* 24px */
+    --space-8: 2rem;
+    /* 32px */
+    --space-10: 2.5rem;
+    /* 40px */
+    --space-12: 3rem;
+    /* 48px */
+    --space-16: 4rem;
+    /* 64px */
+    --space-20: 5rem;
+    /* 80px */
+    --space-24: 6rem;
+    /* 96px */
 
-    /* Accent colors */
-    --accent: 252 165 165;
-    /* #fca5a5 - soft red for accent */
-    --accent-light: 253 186 142;
-    /* #fdb98e */
-    --accent-dark: 249 115 22;
-    /* #f97316 */
-    --accent-foreground: 30 41 59;
-    /* #1e293b */
+    /* 🌙 ダークモード完全対応 */
+    .dark {
+      /* ダークモード背景色 */
+      --background: 15 23 42;
+      /* #0f172a - リッチダークブルー */
+      --surface: 30 41 59;
+      /* #1e293b - ダークサーフェス */
+      --surface-variant: 51 65 85;
+      /* #334155 - バリアントサーフェス */
+      --foreground: 248 250 252;
+      /* #f8fafc - ライトテキスト */
 
-    /* Status colors remain vibrant */
-    --success: 74 222 128;
-    /* #4ade80 */
-    --warning: 251 191 36;
-    /* #fbbf24 */
-    --error: 248 113 113;
-    /* #f87171 */
+      /* ダークモードカード */
+      --card: 30 41 59;
+      /* #1e293b */
+      --card-foreground: 241 245 249;
+      /* #f1f5f9 */
+      --card-border: 71 85 105;
+      /* #475569 */
 
-    --border: 51 65 85;
-    /* #334155 */
-    --border-light: 71 85 105;
-    /* #475569 */
-    --border-strong: 100 116 139;
-    /* #64748b */
-    --input: 51 65 85;
-    --ring: 96 165 250;
-    /* primary */
+      /* ダークモードプライマリ（明度調整） */
+      --primary: 59 130 246;
+      /* より明るいブルー */
+      --primary-light: 96 165 250;
+      /* #60a5fa */
+      --primary-dark: 37 99 235;
+      /* #2563eb */
+      --primary-50: 30 41 59;
+      /* #1e293b */
+      --primary-100: 51 65 85;
+      /* #334155 */
+
+      /* ダークモードセカンダリ */
+      --secondary: 167 139 250;
+      /* より明るいパープル */
+      --secondary-light: 196 181 253;
+      /* #c4b5fd */
+      --secondary-dark: 139 92 246;
+      /* #8b5cf6 */
+      --secondary-50: 30 41 59;
+      /* #1e293b */
+      --secondary-100: 51 65 85;
+      /* #334155 */
+
+      /* ダークモードアクセント */
+      --accent: 251 146 60;
+      /* より明るいオレンジ */
+      --accent-light: 253 186 116;
+      /* #fdba74 */
+      --accent-dark: 249 115 22;
+      /* #f97316 */
+      --accent-50: 30 41 59;
+      /* #1e293b */
+      --accent-100: 51 65 85;
+      /* #334155 */
+
+      /* ダークモードステータス */
+      --success: 74 222 128;
+      /* #4ade80 */
+      --success-light: 134 239 172;
+      /* #86efac */
+      --success-dark: 34 197 94;
+      /* #22c55e */
+      --success-50: 30 41 59;
+      /* #1e293b */
+
+      --warning: 251 191 36;
+      /* #fbbf24 */
+      --warning-light: 254 215 170;
+      /* #fed7aa */
+      --warning-dark: 245 158 11;
+      /* #f59e0b */
+      --warning-50: 30 41 59;
+      /* #1e293b */
+
+      --error: 248 113 113;
+      /* #f87171 */
+      --error-light: 252 165 165;
+      /* #fca5a5 */
+      --error-dark: 239 68 68;
+      /* #ef4444 */
+      --error-50: 30 41 59;
+      /* #1e293b */
+
+      /* ダークモードニュートラル（反転） */
+      --neutral-50: 15 23 42;
+      /* #0f172a */
+      --neutral-100: 30 41 59;
+      /* #1e293b */
+      --neutral-200: 51 65 85;
+      /* #334155 */
+      --neutral-300: 71 85 105;
+      /* #475569 */
+      --neutral-400: 100 116 139;
+      /* #64748b */
+      --neutral-500: 148 163 184;
+      /* #94a3b8 */
+      --neutral-600: 203 213 225;
+      /* #cbd5e1 */
+      --neutral-700: 226 232 240;
+      /* #e2e8f0 */
+      --neutral-800: 241 245 249;
+      /* #f1f5f9 */
+      --neutral-900: 248 250 252;
+      /* #f8fafc */
+
+      /* ダークモードボーダー */
+      --border: 71 85 105;
+      /* #475569 */
+      --border-light: 51 65 85;
+      /* #334155 */
+      --border-strong: 100 116 139;
+      /* #64748b */
+      --input: 71 85 105;
+      /* #475569 */
+
+      /* ダークモードシャドウ（より強め） */
+      --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+      --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    /* 🎨 ベースフォントの適用 */
+    * {
+      border-color: rgb(var(--border));
+    }
+
+    html {
+      font-family: var(--font-body);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: rgb(var(--background));
+      color: rgb(var(--foreground));
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      font-variation-settings: "opsz" auto;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* 🎯 タイポグラフィシステム強化 */
+    .typography-display-1 {
+      font-size: var(--text-6xl);
+      line-height: var(--leading-tight);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+    }
+
+    .typography-display-2 {
+      font-size: var(--text-5xl);
+      line-height: var(--leading-tight);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .typography-h1 {
+      font-size: var(--text-4xl);
+      line-height: var(--leading-tight);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .typography-h2 {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-snug);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .typography-h3 {
+      font-size: var(--text-2xl);
+      line-height: var(--leading-snug);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .typography-h4 {
+      font-size: var(--text-xl);
+      line-height: var(--leading-normal);
+      font-weight: 600;
+    }
+
+    .typography-h5 {
+      font-size: var(--text-lg);
+      line-height: var(--leading-normal);
+      font-weight: 500;
+    }
+
+    .typography-h6 {
+      font-size: var(--text-base);
+      line-height: var(--leading-normal);
+      font-weight: 500;
+    }
+
+    .typography-body-large {
+      font-size: var(--text-lg);
+      line-height: var(--leading-relaxed);
+      font-weight: 400;
+    }
+
+    .typography-body {
+      font-size: var(--text-base);
+      line-height: var(--leading-normal);
+      font-weight: 400;
+    }
+
+    .typography-body-small {
+      font-size: var(--text-sm);
+      line-height: var(--leading-normal);
+      font-weight: 400;
+    }
+
+    .typography-caption {
+      font-size: var(--text-xs);
+      line-height: var(--leading-normal);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .typography-mono {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      line-height: var(--leading-normal);
+    }
+
+    /* ✨ 高度なアニメーション */
+    .animate-bounce-gentle {
+      animation: bounceGentle 2s ease-in-out infinite;
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .animate-slide-up {
+      animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .animate-scale-in {
+      animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .animate-slide-in-left {
+      animation: slideInLeft 0.3s ease-out;
+    }
+
+    .animate-slide-in-right {
+      animation: slideInRight 0.3s ease-out;
+    }
+
+    .animate-rotate-in {
+      animation: rotateIn 0.5s ease-out;
+    }
+
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    /* キーフレーム定義 */
+    @keyframes bounceGentle {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-4px);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes rotateIn {
+      from {
+        opacity: 0;
+        transform: rotate(-10deg) scale(0.9);
+      }
+
+      to {
+        opacity: 1;
+        transform: rotate(0deg) scale(1);
+      }
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-6px);
+      }
+    }
+
+    @keyframes pulse-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+      }
+
+      50% {
+        box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+      }
+    }
+
+    /* ボタンのベーススタイル - アニメーション強化 */
+    .btn-primary {
+      @apply relative font-medium px-6 py-3 rounded-lg;
+      @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+      @apply transform transition-all duration-200 ease-in-out;
+      @apply hover:scale-105 hover:shadow-lg active:scale-95;
+      background: rgb(var(--primary));
+      color: rgb(var(--primary-foreground));
+    }
+
+    .btn-primary:hover {
+      background: rgb(var(--primary-dark));
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      @apply relative font-medium px-6 py-3 rounded-lg;
+      @apply border focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+      @apply transform transition-all duration-200 ease-in-out;
+      @apply hover:scale-105 hover:shadow-md active:scale-95;
+      background: rgb(var(--surface));
+      color: rgb(var(--neutral-700));
+      border-color: rgb(var(--border));
+    }
+
+    .btn-secondary:hover {
+      background: rgb(var(--neutral-50));
+      border-color: rgb(var(--border-strong));
+      box-shadow: var(--shadow-md);
+    }
+
+    /* アクセントボタン */
+    .btn-accent {
+      @apply relative text-white font-medium px-6 py-3 rounded-lg;
+      @apply focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2;
+      @apply transform transition-all duration-200 ease-in-out;
+      @apply hover:scale-105 hover:shadow-lg active:scale-95;
+      background: var(--gradient-accent);
+      color: rgb(var(--accent-foreground));
+    }
+
+    /* カードスタイル - アニメーション強化 */
+    .card-elevated {
+      @apply rounded-xl border;
+      @apply transform transition-all duration-300 ease-in-out;
+      @apply hover:shadow-lg hover:-translate-y-1;
+      background: rgb(var(--card));
+      border-color: rgb(var(--card-border));
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-elevated:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+      border-color: rgb(var(--border-strong));
+    }
+
+    /* インタラクティブカード */
+    .card-interactive {
+      @apply card-elevated cursor-pointer;
+      @apply hover:scale-[1.02] active:scale-[0.98];
+    }
+
+    /* タスクアイテムスタイル - アニメーション強化 */
+    .task-item {
+      @apply card-elevated p-5 cursor-pointer;
+      @apply transform transition-all duration-200 ease-in-out;
+      @apply animate-fade-in;
+    }
+
+    .task-item:hover {
+      border-color: rgb(var(--primary-100));
+      background: rgb(var(--primary-50));
+      transform: translateY(-1px) scale(1.005);
+    }
+
+    .task-item.completed {
+      @apply opacity-70;
+      background: rgb(var(--neutral-50));
+      transform: scale(0.98);
+    }
+
+    /* サイドバーアイテム - アニメーション強化 */
+    .sidebar-item {
+      @apply flex items-center justify-between p-3 rounded-lg cursor-pointer;
+      @apply transform transition-all duration-200 ease-in-out;
+    }
+
+    .sidebar-item:hover {
+      background: rgb(var(--neutral-50));
+      transform: translateX(4px) scale(1.02);
+    }
+
+    .sidebar-item.active {
+      @apply border-l-4;
+      background: rgb(var(--primary-50));
+      border-left-color: rgb(var(--primary));
+      transform: translateX(2px);
+    }
+
+    /* プログレス・インジケーター */
+    .progress-ring {
+      @apply relative inline-block;
+    }
+
+    .progress-ring circle {
+      transition: stroke-dashoffset 0.35s ease-in-out;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    /* ローディングアニメーション */
+    .loading-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .loading-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .5;
+      }
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* フォーカス・ハイライト */
+    .focus-visible {
+      @apply outline-none ring-2 ring-primary ring-offset-2;
+      animation: pulse-glow 2s infinite;
+    }
+
+    /* 🎯 アクセシビリティ強化 */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .focus-ring {
+      @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    }
+
+    .focus-ring-inset {
+      @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset;
+    }
+
+    /* 高コントラストモード対応 */
+    @media (prefers-contrast: high) {
+      .card-elevated {
+        border-width: 2px;
+      }
+
+      .btn-primary,
+      .btn-secondary,
+      .btn-accent {
+        border-width: 2px;
+        border-style: solid;
+      }
+    }
+
+    /* 動きを減らす設定への対応 */
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      ::before,
+      ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* スクロールアニメーション */
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s ease-out;
+    }
+
+    .scroll-reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ページ遷移アニメーション */
+    .page-enter {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .page-enter-active {
+      opacity: 1;
+      transform: translateY(0);
+      transition: all 300ms ease-out;
+    }
+
+    .page-exit {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .page-exit-active {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: all 200ms ease-in;
+    }
   }
 }
 
@@ -933,138 +1542,6 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
 
 /* スペーシング調整 */
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* 🎥 Animation System - Dynamic & Performant */
-@layer components {
-
-  /* Keyframes for reuse */
-  @keyframes bounceGentle {
-
-    0%,
-    100% {
-      transform: translateY(-2%);
-      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-    }
-
-    50% {
-      transform: translateY(0);
-      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-    }
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideUp {
-    from {
-      transform: translateY(20px);
-      opacity: 0;
-    }
-
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  @keyframes scaleIn {
-    from {
-      transform: scale(0.95);
-      opacity: 0;
-    }
-
-    to {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-
-  @keyframes pulse-glow {
-
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 rgba(var(--primary-light), 0.4);
-    }
-
-    50% {
-      box-shadow: 0 0 0 10px rgba(var(--primary-light), 0);
-    }
-  }
-
-  /* Animation utility classes */
-  .animate-smooth {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .animate-bounce-gentle {
-    animation: bounceGentle 1.5s infinite;
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out;
-  }
-
-  .animate-slide-up {
-    animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .animate-scale-in {
-    animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .animate-pulse-glow {
-    animation: pulse-glow 2s infinite;
-  }
-
-  /* Component-specific animations */
-  .btn {
-    @apply animate-smooth transform;
-  }
-
-  .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-  }
-
-  .btn:active {
-    transform: translateY(0px);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .card-interactive {
-    @apply animate-smooth;
-  }
-
-  .card-interactive:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .loading-spin {
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .focus-ring-animation:focus-visible {
-    @apply ring-2 ring-offset-2 ring-primary;
-    animation: pulse-glow 1.5s infinite;
-  }
+  padding-bottom: 192px;
+  /* エネルギートラッカーの高さ分 */
 }
