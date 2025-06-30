@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format, addDays, subDays } from 'date-fns';
-import { ChevronLeft, ChevronRight, Search, BarChart3, Sun, Moon, Monitor, List, Plus, Calendar, Clock, Trash2, ArrowRight, Tag, CheckCircle2, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart3, Sun, Moon, Monitor, List, Plus, Calendar, Clock, Trash2, ArrowRight, Tag, CheckCircle2, Circle } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
 import { Timeline } from './components/Timeline/Timeline';
@@ -16,7 +16,6 @@ import { useTodos } from './hooks/useTodos'; // 📝 Todoリスト機能
 import { Task, TodoItem } from './types';
 
 // 新機能コンポーネント
-import SearchFilter from './components/ui/SearchFilter';
 import SimpleAnalytics from './components/Analytics/SimpleAnalytics';
 
 function App() {
@@ -25,10 +24,8 @@ function App() {
   const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   // 🎨 新機能の状態管理
-  const [showSearch, setShowSearch] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showTodoList, setShowTodoList] = useState(false); // 📝 Todoリスト表示状態
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
 
   // 📝 Todoリスト関連の状態
   const [isAddingTodo, setIsAddingTodo] = useState(false);
@@ -220,28 +217,24 @@ function App() {
           </div>
 
           {/* 🎨 新機能ツールバー */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
             <button
               onClick={() => setShowTodoList(true)}
-              className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-green-600"
-              title="Todoリスト"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title="タスク待機リスト (T)"
             >
               <List className="w-5 h-5" />
             </button>
             <button
-              onClick={() => setShowSearch(true)}
-              className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-blue-600"
-              title="検索・フィルター"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setShowAnalytics(true)}
-              className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-purple-600"
-              title="詳細分析"
+              onClick={() => setIsStatsOpen(true)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title="統計 (A)"
             >
               <BarChart3 className="w-5 h-5" />
             </button>
+
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-2" />
+
             <button
               onClick={toggleTheme}
               className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-orange-600"
@@ -325,20 +318,6 @@ function App() {
         habits={habits}
         getHabitStreak={getHabitStreak}
       />
-
-      {/* 検索・フィルター */}
-      {showSearch && (
-        <div className="fixed inset-0 z-40 bg-black/50 flex items-start justify-center pt-20">
-          <div className="w-full max-w-2xl mx-4">
-            <SearchFilter
-              tasks={tasks}
-              onFilteredTasksChange={setFilteredTasks}
-              isOpen={showSearch}
-              onToggle={() => setShowSearch(!showSearch)}
-            />
-          </div>
-        </div>
-      )}
 
       {/* 詳細分析 */}
       <SimpleAnalytics

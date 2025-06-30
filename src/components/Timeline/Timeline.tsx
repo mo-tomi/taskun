@@ -593,12 +593,12 @@ export function Timeline({
               return (
                 <div
                   key={task._segmentId || task.id}
-                  className={`absolute flex items-start space-x-2 pr-1 cursor-move transition-all duration-300 ${draggedTask?.id === task.id
-                      ? 'opacity-50 transform rotate-1 scale-95'
-                      : ''
+                  className={`absolute flex items-start space-x-2 pr-1 cursor-move transition-all duration-300 group ${draggedTask?.id === task.id
+                      ? 'opacity-50 transform rotate-1 scale-95 z-10'
+                      : 'hover:z-20'
                     }`}
                   style={{
-                    top: `${topPosition + 24}px`, // ヘッダー分のオフセット
+                    top: `${topPosition + 24}px`,
                     height: `${Math.max(taskHeight, 40)}px`,
                     left: `${task.layout.left * 100}%`,
                     width: `${task.layout.width * 100}%`,
@@ -613,15 +613,22 @@ export function Timeline({
                 >
                   {/* 達成度ゲージ */}
                   <div className="relative z-10 flex-shrink-0 flex flex-col items-center space-y-1 pt-2">
-                    <ProgressGauge task={task} size="sm" showPercentage={true} />
-                    <div className="text-xs text-center text-gray-500 font-medium">
+                    <ProgressGauge
+                      task={task}
+                      size={task.layout.width < 0.5 ? 'sm' : 'md'}
+                      showPercentage={true}
+                    />
+                    <div
+                      className={`text-center text-gray-500 font-medium ${task.layout.width < 0.5 ? 'text-[10px]' : 'text-xs'
+                        }`}
+                    >
                       {Math.round(calculateTaskProgress(task))}%
                     </div>
                   </div>
 
                   {/* タスクカード */}
                   <div
-                    className={`flex-1 min-w-0 border rounded-md p-2 shadow-sm hover:shadow-md transition-all cursor-pointer relative task-card ${isActive
+                    className={`flex-1 min-w-0 border rounded-md p-2 shadow-sm group-hover:shadow-lg transition-all cursor-pointer relative task-card ${isActive
                         ? 'bg-green-50 border-green-300 ring-1 ring-green-200'
                         : task.completed
                           ? 'bg-gray-50 border-gray-200 opacity-60'
@@ -675,10 +682,10 @@ export function Timeline({
                         }}
                         disabled={loadingStates[task.id] === 'loading'}
                         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-md hover:shadow-lg transition-all transform hover:scale-110 touch-target task-completion-button ${loadingStates[task.id] === 'loading'
-                            ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
-                            : task.completed
-                              ? `${colors.dot} border-white text-white`
-                              : `bg-white border-gray-300 hover:border-green-400 hover:bg-green-50`
+                          ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
+                          : task.completed
+                            ? `${colors.dot} border-white text-white`
+                            : `bg-white border-gray-300 hover:border-green-400 hover:bg-green-50`
                           }`}
                         title={
                           loadingStates[task.id] === 'loading'
@@ -721,7 +728,10 @@ export function Timeline({
                           </div>
                         ) : (
                           <div
-                            className={`text-xs font-medium cursor-pointer hover:text-blue-600 transition-colors group ${isActive
+                            className={`font-medium cursor-pointer hover:text-blue-600 transition-colors group ${task.layout.width < 0.5
+                                ? 'text-[10px]'
+                                : 'text-xs'
+                              } ${isActive
                                 ? 'text-green-700'
                                 : task.completed
                                   ? 'text-gray-500'
@@ -750,7 +760,14 @@ export function Timeline({
                       {editingTaskId === task.id ? (
                         <div className="flex items-center space-x-1">
                           {task.emoji && (
-                            <span className="text-sm">{task.emoji}</span>
+                            <span
+                              className={`${task.layout.width < 0.5
+                                  ? 'text-[11px]'
+                                  : 'text-sm'
+                                }`}
+                            >
+                              {task.emoji}
+                            </span>
                           )}
                           <input
                             type="text"
@@ -758,15 +775,22 @@ export function Timeline({
                             onChange={(e) => setEditingTitle(e.target.value)}
                             onKeyDown={handleKeyDown}
                             onBlur={saveEdit}
-                            className="flex-1 text-sm font-semibold bg-white border border-blue-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className={`flex-1 font-semibold bg-white border border-blue-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 ${task.layout.width < 0.5
+                                ? 'text-[11px]'
+                                : 'text-sm'
+                              }`}
                             autoFocus
                           />
                         </div>
                       ) : (
                         <h3
-                          className={`text-sm font-semibold ${colors.text
+                          className={`font-semibold ${colors.text
                             } cursor-pointer hover:text-blue-600 ${task.completed ? 'line-through opacity-60' : ''
-                            } transition-colors group`}
+                            } transition-colors group ${task.layout.width < 0.5
+                              ? 'text-[11px]'
+                              : 'text-sm'
+                            } truncate`}
+                          title={task.title}
                           onClick={(e) => {
                             e.stopPropagation();
                             startEditing(task);
