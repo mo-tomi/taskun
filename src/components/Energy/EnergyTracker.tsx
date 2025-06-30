@@ -13,9 +13,9 @@ interface EnergyTrackerProps {
   onTaskFocus?: (task: Task) => void; // タスクフォーカス機能を追加
 }
 
-export function EnergyTracker({ 
-  currentDate, 
-  energyLevels, 
+export function EnergyTracker({
+  currentDate,
+  energyLevels,
   onUpdateEnergy,
   showHeartRate = false,
   tasks = [],
@@ -51,7 +51,7 @@ export function EnergyTracker({
   const getCurrentTask = () => {
     const now = format(currentTime, 'HH:mm');
     const currentMinutes = parseInt(now.split(':')[0]) * 60 + parseInt(now.split(':')[1]);
-    
+
     return todayTasks.find(task => {
       const startMinutes = parseInt(task.startTime.split(':')[0]) * 60 + parseInt(task.startTime.split(':')[1]);
       const endMinutes = parseInt(task.endTime.split(':')[0]) * 60 + parseInt(task.endTime.split(':')[1]);
@@ -63,7 +63,7 @@ export function EnergyTracker({
   const getNextTask = () => {
     const now = format(currentTime, 'HH:mm');
     const currentMinutes = parseInt(now.split(':')[0]) * 60 + parseInt(now.split(':')[1]);
-    
+
     return todayTasks.find(task => {
       const startMinutes = parseInt(task.startTime.split(':')[0]) * 60 + parseInt(task.startTime.split(':')[1]);
       return startMinutes > currentMinutes && !task.completed;
@@ -100,11 +100,11 @@ export function EnergyTracker({
         const levelHour = parseInt(level.time.split(':')[0]);
         return levelHour === hour;
       });
-      
-      const avgLevel = hourLevels.length > 0 
+
+      const avgLevel = hourLevels.length > 0
         ? hourLevels.reduce((sum, level) => sum + level.level, 0) / hourLevels.length
         : 0;
-      
+
       return { hour, level: avgLevel };
     });
   };
@@ -112,7 +112,7 @@ export function EnergyTracker({
   const heatmapData = generateHeatmapData();
 
   return (
-    <div className="bg-white border-t border-gray-200">
+    <div className="bg-white border-t border-gray-200 z-40 relative shadow-lg energy-tracker-container">
       {/* リアルタイム進捗表示 */}
       <div className="px-4 py-3 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">
@@ -141,9 +141,11 @@ export function EnergyTracker({
               {onTaskFocus && (
                 <button
                   onClick={() => onTaskFocus(currentTask)}
-                  className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
+                  className="px-3 py-1.5 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors shadow-sm flex items-center space-x-1"
+                  title="タスクにフォーカス"
                 >
                   <Play className="w-3 h-3" />
+                  <span className="hidden sm:inline">フォーカス</span>
                 </button>
               )}
             </div>
@@ -166,7 +168,8 @@ export function EnergyTracker({
               {onTaskFocus && (
                 <button
                   onClick={() => onTaskFocus(nextTask)}
-                  className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors shadow-sm"
+                  title="次のタスクを準備"
                 >
                   準備
                 </button>
@@ -201,7 +204,7 @@ export function EnergyTracker({
             <span className="text-sm font-bold text-gray-900">{currentEnergy}%</span>
           </div>
         </div>
-        
+
         {/* エネルギースライダー */}
         <div className="mb-3">
           <input
@@ -228,16 +231,16 @@ export function EnergyTracker({
             <span>高</span>
           </div>
         </div>
-        
+
         {/* 簡単記録ボタン */}
         <div className="flex items-center justify-between">
-          <div className="flex space-x-1">
+          <div className="grid grid-cols-4 gap-2 flex-1">
             <button
               onClick={() => {
                 setCurrentEnergy(25);
                 onUpdateEnergy(25);
               }}
-              className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors"
+              className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors shadow-sm border border-red-200"
             >
               😴 低
             </button>
@@ -246,7 +249,7 @@ export function EnergyTracker({
                 setCurrentEnergy(50);
                 onUpdateEnergy(50);
               }}
-              className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs hover:bg-yellow-200 transition-colors"
+              className="px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors shadow-sm border border-yellow-200"
             >
               😐 普通
             </button>
@@ -255,7 +258,7 @@ export function EnergyTracker({
                 setCurrentEnergy(75);
                 onUpdateEnergy(75);
               }}
-              className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200 transition-colors"
+              className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors shadow-sm border border-blue-200"
             >
               😊 良い
             </button>
@@ -264,7 +267,7 @@ export function EnergyTracker({
                 setCurrentEnergy(90);
                 onUpdateEnergy(90);
               }}
-              className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200 transition-colors"
+              className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors shadow-sm border border-green-200"
             >
               ⚡ 最高
             </button>
@@ -277,12 +280,12 @@ export function EnergyTracker({
 
       {/* エネルギー推移グラフ */}
       <div className="p-2">
-        <EnergyChart 
+        <EnergyChart
           energyLevels={energyLevels}
           currentDate={currentDate}
           height={100}
         />
-        
+
         {/* 記録履歴リスト */}
         <div className="mt-3 px-2">
           <div className="text-xs text-gray-500 mb-2">今日の記録</div>
@@ -291,8 +294,8 @@ export function EnergyTracker({
               <span className="text-xs text-gray-400">記録がありません</span>
             )}
             {todayLevels.slice(-5).map((l) => (
-              <span 
-                key={l.id} 
+              <span
+                key={l.id}
                 className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium"
               >
                 {l.time} {l.level}%

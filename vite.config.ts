@@ -12,8 +12,15 @@ export default defineConfig({
     open: true,              // 自動でブラウザを開く
     port: 5173,              // デフォルトポート明示
     host: true,              // ネットワークアクセス許可
+    strictPort: false,       // ポートが使用中の場合は別のポートを使用
+    cors: true,              // CORS有効化
     hmr: {
       overlay: true,         // エラーオーバーレイ表示
+      clientPort: 24678,     // HMRクライアントポート
+    },
+    watch: {
+      ignored: ['**/node_modules/**', '**/.git/**'],  // 監視除外
+      usePolling: false,     // ネイティブファイル監視を使用（Windowsでは通常これで十分）
     },
   },
   build: {
