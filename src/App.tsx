@@ -296,10 +296,9 @@ function App() {
           taskSegments={todayTaskSegments}
           currentDate={currentDate}
           onTaskComplete={completeTask}
-          onTaskEdit={handleTaskEdit}
-          onTaskReplan={replanTask}
           onTaskDelete={deleteTask}
           onTaskUpdate={updateTask}
+          onDateChange={setCurrentDate}
         />
       </div>
 

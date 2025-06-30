@@ -25,35 +25,15 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
 
   const colors: TaskColor[] = ['coral', 'blue', 'green', 'purple', 'orange', 'teal'];
 
-  // 🕐 15分刻みの時間選択肢を生成（6:00～翌日5:45の24時間対応）
+  // 🕐 15分刻みの時間選択肢を生成（6:00～23:45）
   const generateTimeOptions = () => {
     const options = [];
-
-    // 6:00-23:45（当日）
     for (let hour = 6; hour <= 23; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        options.push({
-          value: timeString,
-          label: timeString,
-          isNextDay: false
-        });
+        options.push(timeString);
       }
     }
-
-    // 0:00-5:45（翌日）
-    for (let hour = 0; hour <= 5; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
-        if (hour === 5 && minute > 45) break; // 5:45まで
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        options.push({
-          value: timeString,
-          label: `${timeString} (+1日)`,
-          isNextDay: true
-        });
-      }
-    }
-
     return options;
   };
 
@@ -67,16 +47,12 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
 
   const getCurrentEndTime = (startTime: string, duration: number = 60) => {
     const [hours, minutes] = startTime.split(':').map(Number);
-    const totalMinutes = hours * 60 + minutes + duration;
-
-    // 24時間を超える場合の処理
-    const endHours = Math.floor(totalMinutes / 60) % 24;
-    const endMinutes = totalMinutes % 60;
-
-    return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+    const endDate = new Date();
+    endDate.setHours(hours, minutes + duration);
+    return format(endDate, 'HH:mm');
   };
 
-  // 現在時刻をセットする関数（15分刻みに丸める・24時間対応）
+  // 現在時刻をセットする関数（15分刻みに丸める）
   const setCurrentTime = () => {
     const now = new Date();
     const currentHour = now.getHours();
@@ -84,15 +60,12 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
 
     // 15分刻みに丸める
     const roundedMinute = Math.round(currentMinute / 15) * 15;
-    let adjustedHour = roundedMinute >= 60 ? currentHour + 1 : currentHour;
+    const adjustedHour = roundedMinute >= 60 ? currentHour + 1 : currentHour;
     const finalMinute = roundedMinute >= 60 ? 0 : roundedMinute;
 
-    // 24時間循環対応
-    if (adjustedHour >= 24) {
-      adjustedHour = 0;
-    }
-
-    const finalTime = `${adjustedHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
+    // 時間範囲内（6:00-23:45）に制限
+    const clampedHour = Math.max(6, Math.min(23, adjustedHour));
+    const finalTime = `${clampedHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
 
     setStartTime(finalTime);
     setEndTime(getCurrentEndTime(finalTime));
@@ -274,9 +247,9 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all enhanced-focus bg-white"
                 >
-                  {timeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {timeOptions.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
                     </option>
                   ))}
                 </select>
@@ -293,9 +266,9 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
                 onChange={(e) => handleEndTimeChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all enhanced-focus bg-white"
               >
-                {timeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                {timeOptions.map((time) => (
+                  <option key={time} value={time}>
+                    {time}
                   </option>
                 ))}
               </select>
