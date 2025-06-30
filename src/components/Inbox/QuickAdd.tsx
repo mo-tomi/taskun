@@ -16,6 +16,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
   const [title, setTitle] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
+  const [taskDate, setTaskDate] = useState(format(currentDate, 'yyyy-MM-dd')); // 🗓️ タスクの開始日
   const [endDate, setEndDate] = useState(''); // 🌅 終了日（空なら開始日と同じ）
   const [color, setColor] = useState<TaskColor>('coral');
   const [isHabit, setIsHabit] = useState(false);
@@ -23,6 +24,20 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
   const inputRef = useRef<HTMLInputElement>(null);
 
   const colors: TaskColor[] = ['coral', 'blue', 'green', 'purple', 'orange', 'teal'];
+
+  // 🕐 15分刻みの時間選択肢を生成（6:00～23:45）
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 6; hour <= 23; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        options.push(timeString);
+      }
+    }
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
 
   // 現在時刻を取得・設定する関数
   const getCurrentTime = () => {
@@ -37,11 +52,23 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
     return format(endDate, 'HH:mm');
   };
 
-  // 現在時刻をセットする関数
+  // 現在時刻をセットする関数（15分刻みに丸める）
   const setCurrentTime = () => {
-    const currentTime = getCurrentTime();
-    setStartTime(currentTime);
-    setEndTime(getCurrentEndTime(currentTime));
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    // 15分刻みに丸める
+    const roundedMinute = Math.round(currentMinute / 15) * 15;
+    const adjustedHour = roundedMinute >= 60 ? currentHour + 1 : currentHour;
+    const finalMinute = roundedMinute >= 60 ? 0 : roundedMinute;
+
+    // 時間範囲内（6:00-23:45）に制限
+    const clampedHour = Math.max(6, Math.min(23, adjustedHour));
+    const finalTime = `${clampedHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
+
+    setStartTime(finalTime);
+    setEndTime(getCurrentEndTime(finalTime));
   };
 
   // 継続時間を計算して終了時刻を更新
@@ -51,7 +78,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
 
     // 🌅 時刻が翌日にまたがる場合は自動的に終了日を翌日に設定
     if (isTimeSpanningNextDay(start, end)) {
-      const nextDay = format(addDays(currentDate, 1), 'yyyy-MM-dd');
+      const nextDay = format(addDays(new Date(taskDate), 1), 'yyyy-MM-dd');
       setEndDate(nextDay);
     } else if (endDate) {
       // 同じ日に戻った場合は終了日をクリア
@@ -65,7 +92,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
 
     // 時刻が翌日にまたがる場合は自動的に終了日を設定
     if (isTimeSpanningNextDay(startTime, newEndTime)) {
-      const nextDay = format(addDays(currentDate, 1), 'yyyy-MM-dd');
+      const nextDay = format(addDays(new Date(taskDate), 1), 'yyyy-MM-dd');
       setEndDate(nextDay);
     } else if (endDate) {
       // 同じ日に戻った場合は終了日をクリア
@@ -73,16 +100,17 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
     }
   };
 
-  // コンポーネントが開かれた時に現在時刻を自動設定
+  // コンポーネントが開かれた時に現在時刻と日付を自動設定
   useEffect(() => {
     if (isOpen) {
       setCurrentTime();
+      setTaskDate(format(currentDate, 'yyyy-MM-dd'));
       // フォーカスを遅延させてアニメーション完了後に実行
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
     }
-  }, [isOpen]);
+  }, [isOpen, currentDate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,14 +120,14 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
     let finalEndDate = endDate;
     if (!finalEndDate && isTimeSpanningNextDay(startTime, endTime)) {
       // 時刻が翌日にまたがる場合は自動的に翌日を設定
-      finalEndDate = format(addDays(currentDate, 1), 'yyyy-MM-dd');
+      finalEndDate = format(addDays(new Date(taskDate), 1), 'yyyy-MM-dd');
     }
 
     onAddTask({
       title: title.trim(),
       startTime,
       endTime,
-      date: format(currentDate, 'yyyy-MM-dd'),
+      date: taskDate, // 🗓️ 設定された開始日を使用
       endDate: finalEndDate || undefined, // 🌅 終了日（空なら undefined）
       color,
       completed: false,
@@ -111,6 +139,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
     setTitle('');
     setStartTime('09:00');
     setEndTime('10:00');
+    setTaskDate(format(new Date(), 'yyyy-MM-dd')); // 🗓️ 開始日もリセット
     setEndDate(''); // 🌅 終了日もリセット
     setIsHabit(false);
     setShowAdvanced(false);
@@ -168,46 +197,81 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
             />
           </div>
 
-          {/* 時間設定 */}
+          {/* 日時設定 */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">時間設定</label>
-              <button
-                type="button"
-                onClick={setCurrentTime}
-                className="flex items-center space-x-1 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium micro-interaction quick-add-pulse"
-              >
-                <Timer className="w-4 h-4" />
-                <span>現在時刻</span>
-              </button>
+              <label className="text-sm font-medium text-gray-700">日時設定</label>
+              <div className="flex space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setTaskDate(format(new Date(), 'yyyy-MM-dd'))}
+                  className="flex items-center space-x-1 px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium micro-interaction"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>今日</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={setCurrentTime}
+                  className="flex items-center space-x-1 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium micro-interaction quick-add-pulse"
+                >
+                  <Timer className="w-4 h-4" />
+                  <span>現在時刻</span>
+                </button>
+              </div>
             </div>
 
+            {/* 開始日時 */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="time-input-enhanced" data-current-time={getCurrentTime()}>
+              <div className="time-input-enhanced">
                 <label className="block text-sm font-medium text-gray-600 mb-1">
-                  開始時刻
+                  開始日
                 </label>
                 <input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => {
-                    setStartTime(e.target.value);
-                    updateEndTime(e.target.value);
-                  }}
+                  type="date"
+                  value={taskDate}
+                  onChange={(e) => setTaskDate(e.target.value)}
+                  min={format(new Date(), 'yyyy-MM-dd')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all enhanced-focus"
                 />
               </div>
               <div className="time-input-enhanced">
                 <label className="block text-sm font-medium text-gray-600 mb-1">
-                  終了時刻
+                  開始時刻
                 </label>
-                <input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => handleEndTimeChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all enhanced-focus"
-                />
+                <select
+                  value={startTime}
+                  onChange={(e) => {
+                    setStartTime(e.target.value);
+                    updateEndTime(e.target.value);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all enhanced-focus bg-white"
+                >
+                  {timeOptions.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
               </div>
+            </div>
+
+            {/* 終了時刻 */}
+            <div className="time-input-enhanced">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                終了時刻
+              </label>
+              <select
+                value={endTime}
+                onChange={(e) => handleEndTimeChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all enhanced-focus bg-white"
+              >
+                {timeOptions.map((time) => (
+                  <option key={time} value={time}>
+                    {time}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* 時間プリセット */}
@@ -241,7 +305,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
               </div>
               {(endDate || isTimeSpanningNextDay(startTime, endTime)) && (
                 <div className="text-xs text-gray-500 mt-1">
-                  期間: {format(currentDate, 'yyyy-MM-dd')} → {endDate || format(addDays(currentDate, 1), 'yyyy-MM-dd')}
+                  期間: {taskDate} → {endDate || format(addDays(new Date(taskDate), 1), 'yyyy-MM-dd')}
                 </div>
               )}
             </div>
@@ -270,7 +334,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <span>開始日: {format(currentDate, 'yyyy-MM-dd')}</span>
+                    <span>開始日: {taskDate}</span>
                     {endDate && (
                       <>
                         <ArrowRight className="w-3 h-3" />
@@ -283,7 +347,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      min={format(currentDate, 'yyyy-MM-dd')}
+                      min={taskDate}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all enhanced-focus"
                       placeholder="終了日を選択（省略可）"
                     />

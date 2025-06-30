@@ -79,3 +79,19 @@ export interface MultiDayTaskSegment {
   segmentStartTime: string; // この日の区間開始時刻
   segmentEndTime: string; // この日の区間終了時刻
 }
+
+// 📝 Todoアイテム - まだスケジュールに配置されていないタスク
+export interface TodoItem {
+  id: string;
+  title: string;
+  description?: string;
+  color: TaskColor;
+  emoji?: string;
+  customColor?: string;
+  isHabit: boolean;
+  subtasks: SubTask[];
+  estimatedDuration?: number; // 予想時間（分）
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  tags: string[];
+  createdAt: string; // ISO string
+}

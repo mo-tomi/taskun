@@ -1,5 +1,5 @@
 import { Task, MultiDayTaskSegment } from '../../types';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Check, Clock, MoreHorizontal, Play, Pause, ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -8,7 +8,8 @@ import { calculateTaskProgress } from '../../utils/timeUtils';
 import {
   generateMultiDayTaskLabel,
   isMultiDayTask,
-  getMultiDayTaskStyle
+  getMultiDayTaskStyle,
+  isTimeSpanningNextDay
 } from '../../utils/multiDayTaskUtils';
 
 // 🎯 ローディング状態とドラッグ体験のコンポーネントをインポート
@@ -153,14 +154,35 @@ export function Timeline({
       const startMinutes = parseInt(editingStartTime.split(':')[0]) * 60 + parseInt(editingStartTime.split(':')[1]);
       const endMinutes = parseInt(editingEndTime.split(':')[0]) * 60 + parseInt(editingEndTime.split(':')[1]);
 
-      if (startMinutes < endMinutes) {
-        onTaskUpdate(editingTimeTaskId, {
+      // 日をまたぐタスクかどうかをチェック
+      const isSpanningNextDay = isTimeSpanningNextDay(editingStartTime, editingEndTime);
+
+      // 通常のタスク（同日内）または日をまたぐタスクの場合は有効
+      if (startMinutes < endMinutes || isSpanningNextDay) {
+        const currentTask = tasks.find(t => t.id === editingTimeTaskId);
+        const updates: Partial<Task> = {
           startTime: editingStartTime,
           endTime: editingEndTime
-        });
+        };
+
+        // 日をまたぐタスクの場合は複数日タスクとして設定
+        if (isSpanningNextDay) {
+          updates.isMultiDay = true;
+          // 明示的なendDateが設定されていない場合は翌日を設定
+          if (!currentTask?.endDate) {
+            const nextDay = addDays(currentDate, 1);
+            updates.endDate = format(nextDay, 'yyyy-MM-dd');
+          }
+        } else {
+          // 同日タスクの場合はendDateをクリア
+          updates.isMultiDay = false;
+          updates.endDate = undefined;
+        }
+
+        onTaskUpdate(editingTimeTaskId, updates);
         cancelTimeEditing();
       } else {
-        alert('開始時間は終了時間より前である必要があります');
+        alert('無効な時間設定です。開始時間と終了時間を確認してください。');
       }
     }
   };
