@@ -590,18 +590,21 @@ export function Timeline({
                 taskHeight = (timeToMinutes('24:00') - startMinutes + endMinutes) * PIXELS_PER_MINUTE;
               }
 
+              // 🎯 最小高さを60pxに保証（約2行のテキストが表示可能）
+              const guaranteedHeight = Math.max(taskHeight, 60);
+
               const isNarrow = task.layout.width < 0.45;
 
               return (
                 <div
                   key={task._segmentId || task.id}
                   className={`absolute flex ${isNarrow ? 'items-stretch' : 'items-start'} space-x-${isNarrow ? '0' : '2'} pr-1 cursor-move transition-all duration-300 group ${draggedTask?.id === task.id
-                      ? 'opacity-50 transform rotate-1 scale-95 z-10'
-                      : 'hover:z-20'
+                    ? 'opacity-50 transform rotate-1 scale-95 z-10'
+                    : 'hover:z-20'
                     }`}
                   style={{
                     top: `${topPosition + 24}px`,
-                    height: `${Math.max(taskHeight, 40)}px`,
+                    height: `${guaranteedHeight}px`,
                     left: `${task.layout.left * 100}%`,
                     width: `${task.layout.width * 100}%`,
                     paddingLeft: '0.25rem',
@@ -625,20 +628,21 @@ export function Timeline({
 
                   {/* タスクカード */}
                   <div
-                    className={`flex-1 min-w-0 border rounded-md p-2 shadow-sm group-hover:shadow-lg transition-all cursor-pointer relative task-card ${isActive
-                        ? 'bg-green-50 border-green-300 ring-1 ring-green-200'
-                        : task.completed
-                          ? 'bg-gray-50 border-gray-200 opacity-60'
-                          : isPast
-                            ? 'bg-red-50 border-red-200'
-                            : `${colors.bg} ${colors.border}`
+                    className={`flex-1 min-w-0 border rounded-md shadow-sm group-hover:shadow-lg transition-all cursor-pointer relative task-card ${isActive
+                      ? 'bg-green-50 border-green-300 ring-1 ring-green-200'
+                      : task.completed
+                        ? 'bg-gray-50 border-gray-200 opacity-60'
+                        : isPast
+                          ? 'bg-red-50 border-red-200'
+                          : `${colors.bg} ${colors.border}`
                       }`}
                     style={{
                       height: `100%`,
                       fontSize: isNarrow ? '0.65rem' : '0.75rem',
+                      padding: '4px',
                     }}
                   >
-                    {/* チェックボタン（右上に小さめに配置） */}
+                    {/* チェックボタン（右上に固定配置） */}
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
@@ -657,11 +661,11 @@ export function Timeline({
                         }
                       }}
                       disabled={loadingStates[task.id] === 'loading'}
-                      className={`absolute ${isNarrow ? 'top-1 right-1 w-4 h-4' : 'top-2 right-2 w-5 h-5'} rounded-full border-2 flex items-center justify-center shadow transition-colors ${loadingStates[task.id] === 'loading'
-                          ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
-                          : task.completed
-                            ? `${colors.dot} border-white text-white`
-                            : 'bg-white border-gray-300 hover:border-green-400 hover:bg-green-50'
+                      className={`absolute top-1 right-1 ${isNarrow ? 'w-4 h-4' : 'w-5 h-5'} rounded-full border-2 flex items-center justify-center shadow transition-colors z-10 ${loadingStates[task.id] === 'loading'
+                        ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
+                        : task.completed
+                          ? `${colors.dot} border-white text-white`
+                          : 'bg-white border-gray-300 hover:border-green-400 hover:bg-green-50'
                         }`}
                     >
                       {loadingStates[task.id] === 'loading' ? (
@@ -673,12 +677,30 @@ export function Timeline({
                       )}
                     </button>
 
-                    {/* 時間とタイトル */}
-                    <div className="flex flex-col h-full">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`font-medium ${isActive ? 'text-green-700' : isPast ? 'text-red-600' : 'text-gray-600'}`}>{displayStartTime} - {displayEndTime}</span>
+                    {/* 時間とタイトル（チェックボタンと重ならないよう右の余白を確保） */}
+                    <div className="flex flex-col h-full" style={{ paddingRight: isNarrow ? '20px' : '28px' }}>
+                      {/* 時間表示 */}
+                      <div className="flex-shrink-0 mb-1">
+                        <span className={`text-xs font-medium ${isActive ? 'text-green-700' : isPast ? 'text-red-600' : 'text-gray-600'}`}>
+                          {displayStartTime} - {displayEndTime}
+                        </span>
                       </div>
-                      <div className="truncate font-semibold" title={task.title}>{task.title}</div>
+
+                      {/* タイトル（2行まで表示可能） */}
+                      <div
+                        className={`flex-1 font-semibold leading-tight ${isNarrow ? 'text-xs' : 'text-sm'} ${isActive ? 'text-green-800' : isPast ? 'text-red-700' : 'text-gray-800'}`}
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          wordBreak: 'break-word',
+                        }}
+                        title={task.title}
+                      >
+                        {task.emoji && <span className="mr-1">{task.emoji}</span>}
+                        {task.title}
+                      </div>
                     </div>
                   </div>
                 </div>
