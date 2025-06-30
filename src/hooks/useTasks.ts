@@ -1,11 +1,36 @@
-import { useState, useCallback } from 'react';
-import { Task, TaskColor, HabitData } from '../types';
+import { useCallback } from 'react';
+import { Task, HabitData } from '../types';
 import { useLocalStorage } from './useLocalStorage';
-import { format, startOfDay, addDays, isToday } from 'date-fns';
+import { format, startOfDay, addDays } from 'date-fns';
 
 export function useTasks() {
   const [tasks, setTasks] = useLocalStorage<Task[]>('structured-tasks', []);
   const [habits, setHabits] = useLocalStorage<HabitData[]>('structured-habits', []);
+  // タスク履歴のlocalStorage管理
+  const [taskHistory, setTaskHistory] = useLocalStorage<Omit<Task, 'id' | 'date' | 'completed' | 'subtasks'>[]>('structured-task-history', []);
+
+  // タスク履歴に追加（重複タイトルは最新で上書き）
+  const addTaskToHistory = useCallback((task: Omit<Task, 'id'>) => {
+    setTaskHistory(prev => {
+      // タイトル・色・emoji・時間帯・説明・カスタム色のみ保存
+      const newEntry = {
+        title: task.title,
+        startTime: task.startTime,
+        endTime: task.endTime,
+        color: task.color,
+        isHabit: task.isHabit,
+        description: task.description,
+        emoji: task.emoji,
+        customColor: task.customColor
+      };
+      // タイトル重複は上書き
+      const filtered = prev.filter(h => h.title !== newEntry.title);
+      return [newEntry, ...filtered].slice(0, 20); // 最大20件まで
+    });
+  }, [setTaskHistory]);
+
+  // 履歴から取得
+  const getTaskHistory = useCallback(() => taskHistory, [taskHistory]);
 
   const addTask = useCallback((task: Omit<Task, 'id'>) => {
     const newTask: Task = {
@@ -14,8 +39,9 @@ export function useTasks() {
       subtasks: task.subtasks.map(st => ({ ...st, id: crypto.randomUUID() }))
     };
     setTasks(prev => [...prev, newTask]);
+    addTaskToHistory(task);
     return newTask;
-  }, [setTasks]);
+  }, [setTasks, addTaskToHistory]);
 
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
     setTasks(prev => prev.map(task => 
@@ -97,6 +123,7 @@ export function useTasks() {
     replanTask,
     getTasksForDate,
     getHabitStreak,
-    habits
+    habits,
+    getTaskHistory // 追加
   };
 }

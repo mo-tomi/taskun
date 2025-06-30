@@ -116,10 +116,10 @@ export function EnergyTracker({
       <div className="px-4 py-3 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
-            <Clock className="w-4 h-4 text-blue-600" />
-            <span className="text-xs font-medium text-gray-600">現在時刻</span>
+            <Clock className="w-5 h-5 text-blue-600 animate-pulse" />
+            <span className="text-base font-bold text-blue-700">現在時刻</span>
           </div>
-          <span className="text-sm font-mono font-bold text-blue-600">
+          <span className="text-2xl font-extrabold text-blue-700 tracking-widest font-mono drop-shadow">
             {format(currentTime, 'HH:mm:ss')}
           </span>
         </div>
@@ -262,6 +262,18 @@ export function EnergyTracker({
           <span>0時</span>
           <span>12時</span>
           <span>24時</span>
+        </div>
+        {/* 記録履歴リスト */}
+        <div className="mt-2">
+          <div className="text-[10px] text-gray-400 mb-1">記録履歴</div>
+          <div className="flex flex-wrap gap-1">
+            {todayLevels.length === 0 && <span className="text-xs text-gray-300">記録なし</span>}
+            {todayLevels.map((l) => (
+              <span key={l.id} className="px-2 py-0.5 rounded bg-gray-100 text-xs text-gray-700 border border-gray-200">
+                {l.time}：{l.level}%
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>

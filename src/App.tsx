@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import { format, addDays, subDays, isToday } from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { useState } from 'react';
+import { format, addDays, subDays } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
-import { Header } from './components/Layout/Header';
 import { Timeline } from './components/Timeline/Timeline';
 import { QuickAdd } from './components/Inbox/QuickAdd';
 import { FocusMode } from './components/FocusMode/FocusMode';
@@ -13,11 +11,10 @@ import { EnergyTracker } from './components/Energy/EnergyTracker';
 
 import { useTasks } from './hooks/useTasks';
 import { useEnergyTracking } from './hooks/useEnergyTracking';
-import { Task, ViewMode } from './types';
+import { Task } from './types';
 
 function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
@@ -31,7 +28,8 @@ function App() {
     replanTask,
     getTasksForDate,
     getHabitStreak,
-    habits
+    habits,
+    getTaskHistory // 追加
   } = useTasks();
 
   const {
@@ -77,21 +75,6 @@ function App() {
 
     const updatedSubtasks = updateSubtaskRecursive(task.subtasks);
     updateTask(taskId, { subtasks: updatedSubtasks });
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === '/' && !isQuickAddOpen) {
-      e.preventDefault();
-      setIsQuickAddOpen(true);
-    }
-    else if (e.key === 'Escape' && isQuickAddOpen) {
-      e.preventDefault();
-      setIsQuickAddOpen(false);
-    }
-    else if (e.key === 't' || e.key === 'T') {
-      e.preventDefault();
-      setCurrentDate(new Date());
-    }
   };
 
   return (
@@ -141,6 +124,33 @@ function App() {
           </button>
         </div>
 
+        {/* タスク履歴リスト */}
+        <div className="border-t border-gray-200 p-3 bg-gray-50">
+          <div className="text-xs text-gray-500 mb-2">タスク履歴</div>
+          <div className="space-y-1 max-h-32 overflow-y-auto">
+            {getTaskHistory().length === 0 && (
+              <div className="text-xs text-gray-400">履歴はありません</div>
+            )}
+            {getTaskHistory().map((h, i) => (
+              <button
+                key={h.title + i}
+                className="w-full flex items-center space-x-2 px-2 py-1 rounded hover:bg-blue-100 text-left"
+                onClick={() => addTask({
+                  ...h,
+                  date: format(currentDate, 'yyyy-MM-dd'),
+                  completed: false,
+                  subtasks: [],
+                  isHabit: h.isHabit || false
+                })}
+              >
+                <span className={`w-2 h-2 rounded-full ${h.color ? `bg-${h.color}-400` : 'bg-gray-300'}`}></span>
+                <span className="text-xs">{h.emoji} {h.title}</span>
+                <span className="ml-auto text-[10px] text-gray-400">{h.startTime}~{h.endTime}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* エネルギートラッカー */}
         <EnergyTracker
           currentDate={currentDate}
@@ -164,7 +174,7 @@ function App() {
                 <ChevronLeft className="w-5 h-5 text-gray-600" />
               </button>
               <h2 className="text-lg font-semibold text-gray-900">
-                {format(currentDate, 'yyyy年M月', { locale: ja })}
+                {format(currentDate, 'yyyy年M月')}
               </h2>
               <button
                 onClick={handleNextDay}
@@ -191,7 +201,7 @@ function App() {
                   onClick={() => setCurrentDate(date)}
                 >
                   <div className="text-xs text-gray-500 mb-1">
-                    {format(date, 'E', { locale: ja })}
+                    {format(date, 'E')}
                   </div>
                   <div className={`text-lg font-semibold ${
                     isSelected ? 'text-red-600' : 'text-gray-900'

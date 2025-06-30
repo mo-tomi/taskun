@@ -96,9 +96,9 @@ export function Timeline({
       <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
-            <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium text-gray-700">現在時刻</span>
-            <span className="text-lg font-bold text-blue-600">
+            <div className="w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
+            <span className="text-lg font-extrabold text-blue-700 tracking-widest drop-shadow">現在時刻</span>
+            <span className="text-2xl font-extrabold text-blue-700 font-mono drop-shadow animate-pulse">
               {format(currentTime, 'HH:mm:ss')}
             </span>
           </div>
@@ -156,8 +156,29 @@ export function Timeline({
         )}
       </div>
 
-      {/* 縦のタイムライン */}
-      <div className="absolute left-6 top-32 bottom-0 w-0.5 bg-gray-200" />
+      {/* 縦のタイムライン＋現在時刻ライン */}
+      <div className="absolute left-6 top-32 bottom-0 w-0.5 bg-gray-200">
+        {/* 現在時刻ライン */}
+        {(() => {
+          // タイムラインの高さ・タスク数から現在時刻の位置を計算
+          if (sortedTasks.length === 0) return null;
+          const timelineStart = parseInt(sortedTasks[0].startTime.split(':')[0]);
+          const timelineEnd = parseInt(sortedTasks[sortedTasks.length-1].endTime.split(':')[0]) + 1;
+          const now = format(currentTime, 'HH:mm');
+          const currentHour = parseInt(now.split(':')[0]);
+          if (currentHour < timelineStart || currentHour > timelineEnd) return null;
+          const percent = ((currentHour - timelineStart) / (timelineEnd - timelineStart));
+          return (
+            <div
+              className="absolute left-[-12px] w-24 flex items-center"
+              style={{ top: `calc(${percent * 100}% - 8px)` }}
+            >
+              <div className="w-6 h-0.5 bg-blue-500 rounded-full" />
+              <span className="ml-2 text-xs text-blue-700 font-mono bg-white px-1 rounded shadow">{format(currentTime, 'HH:mm')}</span>
+            </div>
+          );
+        })()}
+      </div>
       
       <div className="space-y-6">
         {sortedTasks.map((task) => {
