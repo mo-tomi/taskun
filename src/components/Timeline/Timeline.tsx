@@ -590,10 +590,12 @@ export function Timeline({
                 taskHeight = (timeToMinutes('24:00') - startMinutes + endMinutes) * PIXELS_PER_MINUTE;
               }
 
+              const isNarrow = task.layout.width < 0.45;
+
               return (
                 <div
                   key={task._segmentId || task.id}
-                  className={`absolute flex items-start space-x-2 pr-1 cursor-move transition-all duration-300 group ${draggedTask?.id === task.id
+                  className={`absolute flex ${isNarrow ? 'items-stretch' : 'items-start'} space-x-${isNarrow ? '0' : '2'} pr-1 cursor-move transition-all duration-300 group ${draggedTask?.id === task.id
                       ? 'opacity-50 transform rotate-1 scale-95 z-10'
                       : 'hover:z-20'
                     }`}
@@ -611,20 +613,15 @@ export function Timeline({
                   onDragEnd={handleDragEnd}
                   onDragOver={handleDragOver}
                 >
-                  {/* 達成度ゲージ */}
-                  <div className="relative z-10 flex-shrink-0 flex flex-col items-center space-y-1 pt-2">
-                    <ProgressGauge
-                      task={task}
-                      size={task.layout.width < 0.5 ? 'sm' : 'md'}
-                      showPercentage={true}
-                    />
-                    <div
-                      className={`text-center text-gray-500 font-medium ${task.layout.width < 0.5 ? 'text-[10px]' : 'text-xs'
-                        }`}
-                    >
-                      {Math.round(calculateTaskProgress(task))}%
+                  {/* 達成度ゲージ（幅が十分ある時のみ表示） */}
+                  {!isNarrow && (
+                    <div className="relative z-10 flex-shrink-0 flex flex-col items-center space-y-1 pt-2 w-10">
+                      <ProgressGauge task={task} size="md" showPercentage={true} />
+                      <div className="text-xs text-center text-gray-500 font-medium">
+                        {Math.round(calculateTaskProgress(task))}%
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* タスクカード */}
                   <div
@@ -638,213 +635,51 @@ export function Timeline({
                       }`}
                     style={{
                       height: `100%`,
+                      fontSize: isNarrow ? '0.65rem' : '0.75rem',
                     }}
                   >
-                    {/* 🎯 改良されたドラッグインジケーター */}
-                    <DragIndicator
-                      visible={!dragState.isDragging || dragState.draggedItemId !== task.id}
-                      position="top-right"
-                      pulse={dragState.isDragging && dragState.draggedItemId === task.id}
-                    />
-
-                    {/* 🔄 ローディングオーバーレイ */}
-                    <TaskLoadingOverlay
-                      state={loadingStates[task.id] || 'idle'}
-                      taskTitle={task.title}
-                    />
-
-                    {/* 🎯 完了ボタン（左上に配置）+ ローディング対応 */}
-                    <div className="absolute top-2 left-2 z-20">
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (loadingStates[task.id] === 'loading') return;
-
-                          // ローディング開始
-                          setTaskLoading(task.id, 'loading');
-
-                          try {
-                            // 完了処理のシミュレーション
-                            await new Promise(resolve => setTimeout(resolve, 600));
-                            onTaskComplete(task.id);
-
-                            // 成功状態
-                            setTaskLoading(task.id, 'success');
-                            showToast('success', `「${task.title}」を${task.completed ? '未完了' : '完了'}にしました`);
-                            setTimeout(() => setTaskLoading(task.id, 'idle'), 1000);
-
-                          } catch (error) {
-                            // エラー状態
-                            setTaskLoading(task.id, 'error');
-                            showToast('error', 'タスクの更新に失敗しました');
-                            setTimeout(() => setTaskLoading(task.id, 'idle'), 2000);
-                          }
-                        }}
-                        disabled={loadingStates[task.id] === 'loading'}
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-md hover:shadow-lg transition-all transform hover:scale-110 touch-target task-completion-button ${loadingStates[task.id] === 'loading'
+                    {/* チェックボタン（右上に小さめに配置） */}
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (loadingStates[task.id] === 'loading') return;
+                        setTaskLoading(task.id, 'loading');
+                        try {
+                          await new Promise((res) => setTimeout(res, 300));
+                          onTaskComplete(task.id);
+                          setTaskLoading(task.id, 'success');
+                          showToast('success', `「${task.title}」を${task.completed ? '未完了' : '完了'}にしました`);
+                          setTimeout(() => setTaskLoading(task.id, 'idle'), 800);
+                        } catch {
+                          setTaskLoading(task.id, 'error');
+                          showToast('error', 'タスクの更新に失敗しました');
+                          setTimeout(() => setTaskLoading(task.id, 'idle'), 1500);
+                        }
+                      }}
+                      disabled={loadingStates[task.id] === 'loading'}
+                      className={`absolute ${isNarrow ? 'top-1 right-1 w-4 h-4' : 'top-2 right-2 w-5 h-5'} rounded-full border-2 flex items-center justify-center shadow transition-colors ${loadingStates[task.id] === 'loading'
                           ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
                           : task.completed
                             ? `${colors.dot} border-white text-white`
-                            : `bg-white border-gray-300 hover:border-green-400 hover:bg-green-50`
-                          }`}
-                        title={
-                          loadingStates[task.id] === 'loading'
-                            ? '更新中...'
-                            : task.completed
-                              ? 'タスク完了済み'
-                              : 'タスクを完了'
-                        }
-                      >
-                        {loadingStates[task.id] === 'loading' ? (
-                          <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                        ) : task.completed ? (
-                          <Check className="w-3 h-3" />
-                        ) : (
-                          <div className="w-3 h-3 rounded-full border border-gray-400" />
-                        )}
-                      </button>
-                    </div>
-
-                    {/* 時間表示と状態 */}
-                    <div className="flex items-center justify-between mb-2 ml-8">
-                      <div className="flex items-center space-x-2">
-                        {editingTimeTaskId === task.id ? (
-                          <div className="flex items-center space-x-1">
-                            <input
-                              type="time"
-                              value={editingStartTime}
-                              onChange={(e) => setEditingStartTime(e.target.value)}
-                              onKeyDown={handleTimeKeyDown}
-                              className="text-xs font-medium bg-white border border-blue-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                            <span className="text-xs text-gray-500">-</span>
-                            <input
-                              type="time"
-                              value={editingEndTime}
-                              onChange={(e) => setEditingEndTime(e.target.value)}
-                              onKeyDown={handleTimeKeyDown}
-                              className="text-xs font-medium bg-white border border-blue-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </div>
-                        ) : (
-                          <div
-                            className={`font-medium cursor-pointer hover:text-blue-600 transition-colors group ${task.layout.width < 0.5
-                                ? 'text-[10px]'
-                                : 'text-xs'
-                              } ${isActive
-                                ? 'text-green-700'
-                                : task.completed
-                                  ? 'text-gray-500'
-                                  : isPast
-                                    ? 'text-red-600'
-                                    : 'text-gray-600'
-                              }`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startTimeEditing(task);
-                            }}
-                          >
-                            {displayStartTime} - {displayEndTime}
-                          </div>
-                        )}
-                        {isActive && (
-                          <span className="px-1.5 py-0.5 bg-green-600 text-white text-xs rounded-full font-medium animate-pulse">
-                            実行中
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* タスクタイトル */}
-                    <div className="mb-1">
-                      {editingTaskId === task.id ? (
-                        <div className="flex items-center space-x-1">
-                          {task.emoji && (
-                            <span
-                              className={`${task.layout.width < 0.5
-                                  ? 'text-[11px]'
-                                  : 'text-sm'
-                                }`}
-                            >
-                              {task.emoji}
-                            </span>
-                          )}
-                          <input
-                            type="text"
-                            value={editingTitle}
-                            onChange={(e) => setEditingTitle(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            onBlur={saveEdit}
-                            className={`flex-1 font-semibold bg-white border border-blue-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 ${task.layout.width < 0.5
-                                ? 'text-[11px]'
-                                : 'text-sm'
-                              }`}
-                            autoFocus
-                          />
-                        </div>
+                            : 'bg-white border-gray-300 hover:border-green-400 hover:bg-green-50'
+                        }`}
+                    >
+                      {loadingStates[task.id] === 'loading' ? (
+                        <div className={`${isNarrow ? 'w-2 h-2' : 'w-3 h-3'} border-2 border-blue-500 border-t-transparent rounded-full animate-spin`} />
+                      ) : task.completed ? (
+                        <Check className={`${isNarrow ? 'w-2 h-2' : 'w-3 h-3'}`} />
                       ) : (
-                        <h3
-                          className={`font-semibold ${colors.text
-                            } cursor-pointer hover:text-blue-600 ${task.completed ? 'line-through opacity-60' : ''
-                            } transition-colors group ${task.layout.width < 0.5
-                              ? 'text-[11px]'
-                              : 'text-sm'
-                            } truncate`}
-                          title={task.title}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditing(task);
-                          }}
-                        >
-                          {task.emoji && (
-                            <span className="mr-1">{task.emoji}</span>
-                          )}
-                          {/* 🌅 複数日タスクのラベル表示 */}
-                          {(() => {
-                            // taskSegmentsから該当するセグメントを見つける
-                            if (taskSegments) {
-                              const segment = taskSegments.find(
-                                (s) => s.task.id === task.id
-                              );
-                              if (segment) {
-                                return generateMultiDayTaskLabel(segment);
-                              }
-                            }
-                            // 通常のタスクまたはセグメントが見つからない場合
-                            return task.title;
-                          })()}
-                          <span className="ml-1 opacity-0 group-hover:opacity-100 text-xs text-gray-400 transition-opacity">
-                            ✏️
-                          </span>
-                          {/* 🌅 複数日タスクのインジケーター */}
-                          {isMultiDayTask(task) && (
-                            <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
-                              複数日
-                            </span>
-                          )}
-                        </h3>
+                        <div className={`${isNarrow ? 'w-2 h-2' : 'w-3 h-3'} rounded-full border border-gray-400`} />
                       )}
-                    </div>
+                    </button>
 
-                    {/* タスク説明 */}
-                    {task.description && (
-                      <p className="text-xs text-gray-600 mb-2 line-clamp-1">
-                        {task.description}
-                      </p>
-                    )}
-
-                    {/* 🌅 複数日タスクの期間情報 */}
-                    {isMultiDayTask(task) && (
-                      <div className="flex items-center space-x-1 mb-2 text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-md p-1">
-                        <ArrowRight className="w-3 h-3 text-blue-600" />
-                        <span>
-                          {task.date} -{' '}
-                          {task.endDate && task.endDate !== task.date
-                            ? task.endDate
-                            : ''}
-                        </span>
+                    {/* 時間とタイトル */}
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`font-medium ${isActive ? 'text-green-700' : isPast ? 'text-red-600' : 'text-gray-600'}`}>{displayStartTime} - {displayEndTime}</span>
                       </div>
-                    )}
+                      <div className="truncate font-semibold" title={task.title}>{task.title}</div>
+                    </div>
                   </div>
                 </div>
               );
