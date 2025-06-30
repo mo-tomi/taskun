@@ -415,6 +415,7 @@ export function Timeline({
 
   const PIXELS_PER_HOUR = 64;
   const PIXELS_PER_MINUTE = PIXELS_PER_HOUR / 60;
+  const HEADER_HEIGHT = 96; // h-24 = 96px
 
   return (
     <div className="relative min-h-screen">
@@ -580,8 +581,10 @@ export function Timeline({
               const startMinutes = timeToMinutes(displayStartTime);
               const endMinutes = timeToMinutes(displayEndTime);
 
-              // 6時からの相対位置を計算
-              const topPosition = (startMinutes - timeToMinutes('06:00')) * PIXELS_PER_MINUTE;
+              // 6時からの相対位置を計算（ヘッダー高さを考慮）
+              // 6時より前のタスクの場合は、6時の位置に表示
+              const relativeStartMinutes = Math.max(startMinutes, timeToMinutes('06:00'));
+              const topPosition = HEADER_HEIGHT + (relativeStartMinutes - timeToMinutes('06:00')) * PIXELS_PER_MINUTE;
 
               // 🌅 複数日タスクの場合、適切な高さを計算
               let taskHeight = (endMinutes - startMinutes) * PIXELS_PER_MINUTE;
@@ -603,7 +606,7 @@ export function Timeline({
                     : 'hover:z-20'
                     }`}
                   style={{
-                    top: `${topPosition + 24}px`,
+                    top: `${topPosition}px`,
                     height: `${guaranteedHeight}px`,
                     left: `${task.layout.left * 100}%`,
                     width: `${task.layout.width * 100}%`,
@@ -716,7 +719,7 @@ export function Timeline({
           {Array.from({ length: 18 }, (_, i) => 6 + i).map(hour =>
             [0, 15, 30, 45].map(minute => {
               const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-              const yPosition = ((hour - 6) * 64) + (minute / 60 * 64) + 24;
+              const yPosition = HEADER_HEIGHT + ((hour - 6) * PIXELS_PER_HOUR) + (minute / 60 * PIXELS_PER_HOUR);
 
               return (
                 <DragGuideline
