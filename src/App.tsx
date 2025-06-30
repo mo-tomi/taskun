@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format, addDays, subDays } from 'date-fns';
-import { ChevronLeft, ChevronRight, Search, BarChart3, Keyboard, Sun, Moon, Monitor } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, BarChart3, Sun, Moon, Monitor } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
 import { Timeline } from './components/Timeline/Timeline';
@@ -12,12 +12,10 @@ import { EnergyTracker } from './components/Energy/EnergyTracker';
 
 import { useTasks } from './hooks/useTasks';
 import { useEnergyTracking } from './hooks/useEnergyTracking';
-import { useKeyboardShortcuts, useShortcutHelp, createDefaultShortcuts } from './hooks/useKeyboardShortcuts';
 import { useTheme } from './hooks/useTheme';
 import { Task } from './types';
 
 // 新機能コンポーネント
-import ShortcutHelp from './components/ui/ShortcutHelp';
 import SearchFilter from './components/ui/SearchFilter';
 import SimpleAnalytics from './components/Analytics/SimpleAnalytics';
 
@@ -34,23 +32,6 @@ function App() {
 
   // 🎯 新機能のフック
   const { theme, toggleTheme } = useTheme();
-  const { isVisible: showShortcutHelp, showHelp, hideHelp, toggleHelp } = useShortcutHelp();
-
-  // ⌨️ キーボードショートカット設定
-  const shortcuts = createDefaultShortcuts({
-    onQuickAdd: () => setIsQuickAddOpen(true),
-    onSearch: () => setShowSearch(true),
-    onToggleTheme: toggleTheme,
-    onShowStats: () => setShowAnalytics(true),
-    onShowHelp: showHelp,
-    onFocusToday: () => setCurrentDate(new Date()),
-    onNextDay: () => setCurrentDate(prev => addDays(prev, 1)),
-    onPrevDay: () => setCurrentDate(prev => subDays(prev, 1)),
-    onSelectAll: () => console.log('Select all tasks'),
-    onDeleteSelected: () => console.log('Delete selected tasks'),
-  });
-
-  useKeyboardShortcuts(shortcuts);
 
   const {
     tasks,
@@ -142,28 +123,21 @@ function App() {
             <button
               onClick={() => setShowSearch(true)}
               className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-blue-600"
-              title="検索・フィルター (Ctrl+F)"
+              title="検索・フィルター"
             >
               <Search className="w-5 h-5" />
             </button>
             <button
               onClick={() => setShowAnalytics(true)}
               className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-purple-600"
-              title="詳細分析 (Ctrl+Shift+S)"
+              title="詳細分析"
             >
               <BarChart3 className="w-5 h-5" />
             </button>
             <button
-              onClick={showHelp}
-              className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-green-600"
-              title="ショートカットヘルプ (?)"
-            >
-              <Keyboard className="w-5 h-5" />
-            </button>
-            <button
               onClick={toggleTheme}
               className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-orange-600"
-              title="テーマ切り替え (Ctrl+D)"
+              title="テーマ切り替え"
             >
               {theme === 'light' ? <Moon className="w-5 h-5" /> :
                 theme === 'dark' ? <Sun className="w-5 h-5" /> :
@@ -222,6 +196,13 @@ function App() {
         />
       </div>
 
+      {/* エネルギートラッカー */}
+      <EnergyTracker
+        currentDate={currentDate}
+        energyLevels={todayEnergyLevels}
+        onUpdateEnergy={addEnergyLevel}
+      />
+
       {/* Quick Add */}
       <QuickAdd
         onAddTask={addTask}
@@ -249,14 +230,6 @@ function App() {
         tasks={tasks}
         habits={habits}
         getHabitStreak={getHabitStreak}
-      />
-
-      {/* 🎨 新機能コンポーネント */}
-      {/* ショートカットヘルプ */}
-      <ShortcutHelp
-        isOpen={showShortcutHelp}
-        shortcuts={shortcuts}
-        onClose={hideHelp}
       />
 
       {/* 検索・フィルター */}

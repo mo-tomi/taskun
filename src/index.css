@@ -1312,10 +1312,97 @@
     border: 1px solid rgba(255, 255, 255, 0.18);
   }
 
+  .glass-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
   .glass-dark {
     background: rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  /* マイクロインタラクション */
+  .micro-interaction {
+    transition: all 0.2s ease;
+  }
+
+  .micro-interaction:hover {
+    transform: translateY(-1px);
+  }
+
+  /* フォーカス強化 */
+  .enhanced-focus {
+    transition: all 0.2s ease;
+  }
+
+  .enhanced-focus:focus {
+    outline: none;
+    ring: 2px solid rgb(var(--primary));
+    ring-offset: 2px;
+    box-shadow: 0 0 0 2px rgb(var(--primary) / 0.2);
+  }
+
+  /* プログレッシブ開示 */
+  .progressive-disclosure {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .progressive-disclosure.expanded {
+    max-height: 1000px;
+  }
+
+  /* 現在時刻インジケーター */
+  .current-time-indicator::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgb(var(--primary)), transparent);
+    animation: pulse-glow 2s infinite;
+  }
+
+  /* クイック追加のパルス効果 */
+  .quick-add-pulse {
+    animation: pulse 2s infinite;
+  }
+
+  /* 時間プリセットボタン */
+  .time-preset-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* 時間入力強化 */
+  .time-input-enhanced input:focus {
+    box-shadow: 0 0 0 3px rgb(var(--primary) / 0.1);
+  }
+
+  /* タスクプレビュー */
+  .task-preview {
+    background: rgb(var(--neutral-50));
+    border: 1px solid rgb(var(--border));
+    border-radius: 8px;
+    padding: 12px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+  }
+
+  .task-preview.has-content {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   /* ニューモーフィズム */

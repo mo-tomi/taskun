@@ -117,25 +117,13 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
     onToggle();
   };
 
-  // キーボードショートカット
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onToggle();
-    } else if (e.key === 'Enter' && e.metaKey) {
-      handleSubmit(e);
-    } else if (e.key === 'Tab' && e.shiftKey) {
-      e.preventDefault();
-      setShowAdvanced(!showAdvanced);
-    }
-  };
-
   if (!isOpen) {
     return (
       /* メインのクイック追加ボタンのみ */
       <button
         onClick={onToggle}
         className="fixed bottom-6 right-6 gradient-primary text-white rounded-full p-4 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 z-50 pulse-glow group"
-        title="クイック追加 (キーボード: /)"
+        title="クイック追加"
       >
         <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-200" />
       </button>
@@ -166,7 +154,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* タスク名入力 */}
           <div>
             <input
@@ -174,7 +162,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="何をしますか？ (Enter+Cmd で追加)"
+              placeholder="何をしますか？"
               className="w-full px-4 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-500 text-lg transition-all enhanced-focus"
               autoFocus
             />
@@ -379,11 +367,6 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
               <Zap className="w-4 h-4" />
               <span>追加</span>
             </button>
-          </div>
-
-          {/* キーボードショートカットヘルプ */}
-          <div className="text-xs text-gray-500 text-center space-y-1">
-            <p>Cmd+Enter: 追加 | Shift+Tab: 詳細設定 | Esc: キャンセル</p>
           </div>
         </form>
       </div>
