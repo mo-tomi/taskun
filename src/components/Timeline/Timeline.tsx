@@ -567,7 +567,7 @@ export function Timeline({
 
           {/* タスク一覧 - 時間軸に沿って配置 */}
           <div
-            className="relative pb-48"
+            className={`relative pb-48 timeline-task-container ${draggedTask ? 'timeline-dragging' : ''}`}
             style={{ height: `${18 * 64 + 192}px` }}
             onDragOver={handleDragOver}
             onDrop={(e) => e.preventDefault()}
@@ -616,9 +616,13 @@ export function Timeline({
               return (
                 <div
                   key={task._segmentId || task.id}
-                  className={`absolute flex ${isNarrow ? 'items-stretch' : 'items-start'} space-x-${isNarrow ? '0' : '2'} pr-1 cursor-move transition-all duration-300 group ${draggedTask?.id === task.id
-                    ? 'opacity-50 transform rotate-1 scale-95 z-10'
-                    : 'hover:z-20'
+                  className={`absolute flex ${isNarrow ? 'items-stretch' : 'items-start'} space-x-${isNarrow ? '0' : '2'} pr-1 cursor-move transition-all duration-300 group timeline-task-card ${draggedTask?.id === task.id
+                    ? 'opacity-50 transform rotate-1 scale-95 dragging'
+                    : isActive
+                      ? 'active'
+                      : task.completed
+                        ? 'completed'
+                        : ''
                     }`}
                   style={{
                     top: `${topPosition + offsetCompensation}px`,
@@ -627,6 +631,7 @@ export function Timeline({
                     width: `${task.layout.width * 100}%`,
                     paddingLeft: '0.25rem',
                     paddingRight: '0.25rem',
+                    marginBottom: '2px', // カード間の間隔を確保
                   }}
                   draggable={!editingTaskId && !editingTimeTaskId}
                   onDragStart={(e) => handleDragStart(e, task)}
@@ -646,7 +651,7 @@ export function Timeline({
 
                   {/* タスクカード */}
                   <div
-                    className={`flex-1 min-w-0 border rounded-md shadow-sm group-hover:shadow-lg transition-all cursor-pointer relative task-card ${isActive
+                    className={`flex-1 min-w-0 border rounded-md shadow-sm group-hover:shadow-lg transition-all cursor-pointer relative task-card timeline-task-content ${isActive
                       ? 'bg-green-50 border-green-300 ring-1 ring-green-200'
                       : task.completed
                         ? 'bg-gray-50 border-gray-200 opacity-60'
@@ -679,7 +684,7 @@ export function Timeline({
                         }
                       }}
                       disabled={loadingStates[task.id] === 'loading'}
-                      className={`absolute top-1 right-1 ${isNarrow ? 'w-4 h-4' : 'w-5 h-5'} rounded-full border-2 flex items-center justify-center shadow transition-colors z-10 ${loadingStates[task.id] === 'loading'
+                      className={`absolute top-1 right-1 ${isNarrow ? 'w-4 h-4' : 'w-5 h-5'} rounded-full border-2 flex items-center justify-center shadow transition-colors timeline-task-button ${loadingStates[task.id] === 'loading'
                         ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
                         : task.completed
                           ? `${colors.dot} border-white text-white`
