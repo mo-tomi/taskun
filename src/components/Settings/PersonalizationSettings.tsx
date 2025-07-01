@@ -1,18 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Settings, User, Palette, Eye, Volume2, Clock,
-    Save, RotateCcw, Monitor, Sun, Moon, Zap,
+    Settings, User, Eye, Volume2, Clock,
+    Save, RotateCcw, Zap,
     Type, Contrast, MousePointer
 } from 'lucide-react';
 
 export interface PersonalizationSettings {
-    // テーマ設定
-    theme: 'light' | 'dark' | 'auto';
-    accentColor: string;
-    fontSize: 'small' | 'medium' | 'large';
-    highContrast: boolean;
-
     // 表示設定
     showCompletedTasks: boolean;
     showEnergyLevels: boolean;
@@ -51,7 +45,6 @@ const PersonalizationSettingsComponent: React.FC<PersonalizationSettingsProps> =
     onSave
 }) => {
     const [settings, setSettings] = useState<PersonalizationSettings>(currentSettings);
-    const [activeTab, setActiveTab] = useState<'appearance' | 'behavior' | 'accessibility'>('appearance');
     const [hasChanges, setHasChanges] = useState(false);
 
     const handleSettingChange = <K extends keyof PersonalizationSettings>(
@@ -62,20 +55,7 @@ const PersonalizationSettingsComponent: React.FC<PersonalizationSettingsProps> =
         setHasChanges(true);
     };
 
-    const handleNestedSettingChange = <K extends keyof PersonalizationSettings>(
-        key: K,
-        nestedKey: keyof PersonalizationSettings[K],
-        value: any
-    ) => {
-        setSettings(prev => ({
-            ...prev,
-            [key]: {
-                ...prev[key],
-                [nestedKey]: value
-            }
-        }));
-        setHasChanges(true);
-    };
+
 
     const handleSave = () => {
         onSave(settings);
@@ -87,20 +67,9 @@ const PersonalizationSettingsComponent: React.FC<PersonalizationSettingsProps> =
         setHasChanges(false);
     };
 
-    const accentColors = [
-        { name: 'ブルー', value: '#3B82F6' },
-        { name: 'グリーン', value: '#10B981' },
-        { name: 'パープル', value: '#8B5CF6' },
-        { name: 'ピンク', value: '#EC4899' },
-        { name: 'オレンジ', value: '#F59E0B' },
-        { name: 'レッド', value: '#EF4444' }
-    ];
 
-    const tabs = [
-        { id: 'appearance', label: '外観', icon: <Palette className="w-4 h-4" /> },
-        { id: 'behavior', label: '動作', icon: <Settings className="w-4 h-4" /> },
-        { id: 'accessibility', label: 'アクセシビリティ', icon: <Eye className="w-4 h-4" /> }
-    ];
+
+
 
     if (!isOpen) return null;
 
@@ -134,34 +103,6 @@ const PersonalizationSettingsComponent: React.FC<PersonalizationSettingsProps> =
 
                 <div className="p-6 overflow-y-auto max-h-[calc(90vh-12rem)]">
                     <div className="space-y-6">
-                        <div className="space-y-3">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                テーマ
-                            </label>
-                            <div className="flex space-x-3">
-                                {[
-                                    { value: 'light', label: 'ライト', icon: <Sun className="w-4 h-4" /> },
-                                    { value: 'dark', label: 'ダーク', icon: <Moon className="w-4 h-4" /> },
-                                    { value: 'auto', label: '自動', icon: <Monitor className="w-4 h-4" /> }
-                                ].map((theme) => (
-                                    <button
-                                        key={theme.value}
-                                        onClick={() => handleSettingChange('theme', theme.value as any)}
-                                        className={`
-                                            flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors
-                                            ${settings.theme === theme.value
-                                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
-                                            }
-                                        `}
-                                    >
-                                        {theme.icon}
-                                        <span>{theme.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
                         <div className="space-y-4">
                             <h4 className="font-medium text-gray-900 dark:text-white">表示設定</h4>
 

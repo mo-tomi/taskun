@@ -48,10 +48,6 @@ function App() {
 
   // パーソナライゼーション設定
   const [settings, setSettings] = useLocalStorage<PersonalizationSettings>('taskun-settings', {
-    theme: 'auto',
-    accentColor: '#3B82F6',
-    fontSize: 'medium',
-    highContrast: false,
     showCompletedTasks: true,
     showEnergyLevels: true,
     compactMode: false,
@@ -122,15 +118,9 @@ function App() {
     onEnergyBreak: () => console.log('Energy break'),
 
     // アクセシビリティ
-    onToggleHighContrast: () => setSettings(prev => ({ ...prev, highContrast: !prev.highContrast })),
-    onIncreaseFontSize: () => setSettings(prev => ({
-      ...prev,
-      fontSize: prev.fontSize === 'small' ? 'medium' : prev.fontSize === 'medium' ? 'large' : 'large'
-    })),
-    onDecreaseFontSize: () => setSettings(prev => ({
-      ...prev,
-      fontSize: prev.fontSize === 'large' ? 'medium' : prev.fontSize === 'medium' ? 'small' : 'small'
-    }))
+    onToggleHighContrast: () => console.log('High contrast toggle removed'),
+    onIncreaseFontSize: () => console.log('Font size control removed'),
+    onDecreaseFontSize: () => console.log('Font size control removed')
   };
 
   useEnhancedKeyboardShortcuts(shortcutCallbacks, settings.keyboardNavigation);
