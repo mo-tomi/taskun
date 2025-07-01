@@ -24,7 +24,7 @@ import OnboardingTour from './components/Onboarding/OnboardingTour';
 
 import PersonalizationSettingsComponent, { PersonalizationSettings } from './components/Settings/PersonalizationSettings';
 import { useFeedback } from './components/Feedback/FeedbackSystem';
-import { useEnhancedKeyboardShortcuts } from './hooks/useEnhancedKeyboardShortcuts';
+
 
 function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -67,63 +67,6 @@ function App() {
 
   // フィードバックシステム
   const { FeedbackSystem } = useFeedback();
-
-  // 🎯 新機能のフック
-
-  // 拡張キーボードショートカット
-  const shortcutCallbacks = {
-    // 基本操作
-    onQuickAdd: () => setIsQuickAddOpen(true),
-    onSearch: () => console.log('Search functionality'),
-    onToggleTheme: () => console.log('Theme toggle'),
-    onShowStats: () => setShowAnalytics(true),
-    onShowHelp: () => console.log('Help'),
-
-    // ナビゲーション
-    onFocusToday: () => setCurrentDate(new Date()),
-    onNextDay: () => setCurrentDate(prev => addDays(prev, 1)),
-    onPrevDay: () => setCurrentDate(prev => subDays(prev, -1)),
-    onNextWeek: () => setCurrentDate(prev => addDays(prev, 7)),
-    onPrevWeek: () => setCurrentDate(prev => subDays(prev, -7)),
-    onGoToDate: () => console.log('Go to date'),
-
-    // タスク操作
-    onSelectAll: () => console.log('Select all'),
-    onDeleteSelected: () => console.log('Delete selected'),
-    onCompleteSelected: () => console.log('Complete selected'),
-    onDuplicateSelected: () => console.log('Duplicate selected'),
-    onEditSelected: () => console.log('Edit selected'),
-
-    // 表示・フィルタリング
-    onToggleCompletedTasks: () => setSettings(prev => ({ ...prev, showCompletedTasks: !prev.showCompletedTasks })),
-    onToggleHabits: () => console.log('Toggle habits'),
-    onToggleEnergyView: () => setSettings(prev => ({ ...prev, showEnergyLevels: !prev.showEnergyLevels })),
-    onToggleTodoList: () => setShowTodoList(prev => !prev),
-    onToggleAnalytics: () => setShowAnalytics(prev => !prev),
-
-    // クイックアクション
-    onQuickSchedule: () => console.log('Quick schedule'),
-    onAddBreak: () => console.log('Add break'),
-    onStartFocus: () => console.log('Start focus'),
-    onToggleTimeline: () => console.log('Toggle timeline'),
-
-    // 編集・操作
-    onUndo: () => console.log('Undo'),
-    onRedo: () => console.log('Redo'),
-    onSave: () => console.log('Save'),
-    onExport: () => console.log('Export'),
-
-    // エネルギー管理
-    onLogEnergy: () => console.log('Log energy'),
-    onEnergyBreak: () => console.log('Energy break'),
-
-    // アクセシビリティ
-    onToggleHighContrast: () => console.log('High contrast toggle removed'),
-    onIncreaseFontSize: () => console.log('Font size control removed'),
-    onDecreaseFontSize: () => console.log('Font size control removed')
-  };
-
-  useEnhancedKeyboardShortcuts(shortcutCallbacks, settings.keyboardNavigation);
 
   // 既存のフック
 
