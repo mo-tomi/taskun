@@ -8,6 +8,7 @@ import { TodoItem, TaskColor } from '../../types';
 import { useTodos } from '../../hooks/useTodos';
 import { useTasks } from '../../hooks/useTasks';
 import { format, startOfDay } from 'date-fns';
+import EmptyState from '../ui/EmptyState';
 
 interface TodoListProps {
     className?: string;
@@ -87,6 +88,7 @@ const TodoList: React.FC<TodoListProps> = ({ className = '' }) => {
                 endTime,
                 date: format(startOfDay(new Date()), 'yyyy-MM-dd'),
                 color: todo.color,
+                completed: false,
                 isHabit: todo.isHabit,
                 description: todo.description,
                 subtasks: todo.subtasks,
@@ -189,11 +191,11 @@ const TodoList: React.FC<TodoListProps> = ({ className = '' }) => {
             {/* Todoリスト */}
             <div className="max-h-96 overflow-y-auto">
                 {todos.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">
-                        <Circle className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p>まだタスクがありません</p>
-                        <p className="text-sm">「+」ボタンで新しいタスクを追加</p>
-                    </div>
+                    <EmptyState
+                        type="todos"
+                        onAction={() => setIsAddingTodo(true)}
+                        actionLabel="新しいタスクを追加"
+                    />
                 ) : (
                     <div className="p-2">
                         {todos.map((todo) => {

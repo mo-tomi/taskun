@@ -21,6 +21,7 @@ import { Task, TodoItem } from './types';
 // 新機能コンポーネント
 import SimpleAnalytics from './components/Analytics/SimpleAnalytics';
 import OnboardingTour from './components/Onboarding/OnboardingTour';
+import EmptyState from './components/ui/EmptyState';
 
 import PersonalizationSettingsComponent, { PersonalizationSettings } from './components/Settings/PersonalizationSettings';
 import { useFeedback } from './components/Feedback/FeedbackSystem';
@@ -447,11 +448,11 @@ function App() {
             {/* Todoリスト */}
             <div className="flex-1 overflow-y-auto">
               {todos.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  <Circle className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>まだタスクがありません</p>
-                  <p className="text-sm">「+」ボタンで新しいタスクを追加</p>
-                </div>
+                <EmptyState
+                  type="todos"
+                  onAction={() => setIsAddingTodo(true)}
+                  actionLabel="新しいタスクを追加"
+                />
               ) : (
                 <div className="p-2">
                   {todos.map((todo) => {
