@@ -119,9 +119,9 @@ interface LinearProgressProps {
   className?: string;
 }
 
-export function LinearProgress({ 
-  task, 
-  height = 'h-2', 
+export function LinearProgress({
+  task,
+  height = 'h-3',
   showLabel = false,
   className = '' 
 }: LinearProgressProps) {
@@ -129,9 +129,9 @@ export function LinearProgress({
   
   const getProgressColor = (progress: number, completed: boolean) => {
     if (completed) return 'bg-green-500';
-    if (progress >= 80) return 'bg-blue-500';
-    if (progress >= 50) return 'bg-amber-500';
-    if (progress >= 25) return 'bg-orange-500';
+    if (progress >= 80) return 'bg-gradient-to-r from-blue-400 to-blue-600';
+    if (progress >= 50) return 'bg-gradient-to-r from-amber-400 to-orange-500';
+    if (progress >= 25) return 'bg-gradient-to-r from-orange-400 to-amber-500';
     return 'bg-gray-300';
   };
 
