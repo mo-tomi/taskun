@@ -1675,12 +1675,23 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
 
   /* 重なり防止のための背景確保 */
   background-clip: padding-box;
+
+  /* 視認性向上 - 背景色の強化 */
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+
+  /* テキストコントラスト改善 */
+  color: #1f2937 !important;
+  font-weight: 500 !important;
 }
 
 .timeline-task-card:hover {
   z-index: 15 !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
 .timeline-task-card.active {
@@ -1745,4 +1756,67 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
 
 .timeline-current-time-indicator {
   z-index: 15;
+}
+
+/* 🎯 時間軸の視認性向上 - v1.2.13 */
+.timeline-time-axis {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  line-height: 1.2 !important;
+}
+
+.timeline-time-label {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #4b5563 !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 現在時刻インジケーターの追加 */
+.timeline-current-time-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  z-index: 20;
+}
+
+.timeline-current-time-line::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: -4px;
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* タスクカードの状態別色分け強化 */
+.timeline-task-card.status-waiting {
+  background-color: rgba(243, 244, 246, 0.95) !important;
+  border-left: 4px solid #9ca3af !important;
+}
+
+.timeline-task-card.status-in-progress {
+  background-color: rgba(254, 249, 195, 0.95) !important;
+  border-left: 4px solid #f59e0b !important;
+}
+
+.timeline-task-card.status-completed {
+  background-color: rgba(220, 252, 231, 0.95) !important;
+  border-left: 4px solid #10b981 !important;
+}
+
+.timeline-task-card.status-overdue {
+  background-color: rgba(254, 226, 226, 0.95) !important;
+  border-left: 4px solid #ef4444 !important;
 }
