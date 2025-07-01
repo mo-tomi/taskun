@@ -184,52 +184,14 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
 
   if (!isOpen) {
     return (
-      <>
-        {/* 🚀 改良されたメイン追加ボタン - より目立つデザイン */}
-        <button
-          onClick={onToggle}
-          className="fixed bottom-6 right-6 group z-50"
-          title="新しいタスクを追加"
-        >
-          <div className="relative">
-            {/* 背景グロー効果 */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-75 group-hover:opacity-100 blur-xl transition-all duration-500 animate-pulse"></div>
-
-            {/* メインボタン */}
-            <div className="relative bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full p-5 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 group-hover:rotate-90">
-              <Plus className="w-7 h-7 transition-transform duration-300" />
-            </div>
-
-            {/* パルスリング */}
-            <div className="absolute inset-0 rounded-full border-2 border-blue-300 animate-ping opacity-20"></div>
-          </div>
-
-          {/* ツールチップ */}
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-            <div className="flex items-center space-x-2">
-              <Zap className="w-4 h-4 text-yellow-400" />
-              <span>クイック追加</span>
-            </div>
-          </div>
-        </button>
-
-        {/* 🚀 クイック追加サブボタン */}
-        <button
-          onClick={() => {
-            setIsQuickMode(true);
-            onToggle();
-          }}
-          className="fixed bottom-24 right-6 bg-white text-gray-700 rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-200 z-40 group"
-          title="ワンクリック追加"
-        >
-          <Edit3 className="w-5 h-5 group-hover:text-blue-500 transition-colors duration-200" />
-
-          {/* ミニツールチップ */}
-          <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-            即追加
-          </div>
-        </button>
-      </>
+      /* メインのクイック追加ボタンのみ */
+      <button
+        onClick={onToggle}
+        className="fixed bottom-6 right-6 gradient-primary text-white rounded-full p-4 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 z-50 pulse-glow group"
+        title="クイック追加"
+      >
+        <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-200" />
+      </button>
     );
   }
 

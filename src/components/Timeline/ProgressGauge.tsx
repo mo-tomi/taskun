@@ -255,21 +255,12 @@ export function LinearProgress({
 }: LinearProgressProps) {
   const progress = calculateTaskProgress(task);
 
-  // 🎨 改良されたプログレス色とエフェクト
-  const getProgressClass = (progress: number, completed: boolean) => {
-    if (completed) {
-      return 'bg-gradient-to-r from-green-400 to-green-600';
-    }
-    if (progress >= 80) {
-      return 'bg-gradient-to-r from-blue-400 to-blue-600';
-    }
-    if (progress >= 50) {
-      return 'bg-gradient-to-r from-amber-400 to-amber-600';
-    }
-    if (progress >= 25) {
-      return 'bg-gradient-to-r from-orange-400 to-orange-600';
-    }
-    return 'bg-gradient-to-r from-gray-300 to-gray-400';
+  const getProgressColor = (progress: number, completed: boolean) => {
+    if (completed) return 'bg-green-500';
+    if (progress >= 80) return 'bg-blue-500';
+    if (progress >= 50) return 'bg-amber-500';
+    if (progress >= 25) return 'bg-orange-500';
+    return 'bg-gray-300';
   };
 
   const progressColorClass = getProgressClass(progress, task.completed);
