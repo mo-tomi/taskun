@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format, addDays, subDays } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, BarChart3, Sun, Moon, Monitor, List, Plus, Calendar, Clock, Trash2, ArrowRight, Tag, CheckCircle2, Circle } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
@@ -22,6 +23,7 @@ import SimpleAnalytics from './components/Analytics/SimpleAnalytics';
 
 function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
 
@@ -67,6 +69,15 @@ function App() {
   const todayTasks = getTasksForDate(format(currentDate, 'yyyy-MM-dd'));
   const todayTaskSegments = getTaskSegments(format(currentDate, 'yyyy-MM-dd')); // 🌅 複数日タスクセグメント
   const todayEnergyLevels = getEnergyForDate(format(currentDate, 'yyyy-MM-dd'));
+
+  // ⏰ リアルタイム時刻更新
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   // 📝 Todoリストのヘルパー関数
   const getPriorityConfig = (priority: TodoItem['priority']) => {
@@ -197,8 +208,22 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 font-sans antialiased">
+      {/* 🕐 固定ヘッダー - 現在時刻表示 */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 py-2">
+        <div className="flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-3xl font-bold text-gray-900 font-mono tracking-wider">
+              {format(currentTime, 'HH:mm:ss')}
+            </div>
+            <div className="text-sm text-gray-600">
+              {format(currentTime, 'yyyy年M月d日(E)', { locale: ja })}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* カレンダーヘッダー */}
-      <div className="bg-white border-b border-gray-200 p-4">
+      <div className="bg-white border-b border-gray-200 p-4 pt-20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
             <button

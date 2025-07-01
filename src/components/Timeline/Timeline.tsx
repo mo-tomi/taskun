@@ -675,8 +675,7 @@ export function Timeline({
             ) : (
               <div className="p-3 bg-gray-100 border border-gray-300 rounded-md">
                 <div className="text-center">
-                  <div className="text-sm font-medium text-gray-600">✅ 本日のタスクは完了です</div>
-                  <div className="text-xs text-gray-500 mt-1">お疲れ様でした！</div>
+                  <div className="text-sm font-medium text-gray-600">📋 本日のタスク一覧を確認してください</div>
                 </div>
               </div>
             )}
