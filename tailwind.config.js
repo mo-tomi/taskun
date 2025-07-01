@@ -2,6 +2,40 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class', // ダークモードをクラスで制御
+  safelist: [
+    // タイムライン関連のクラスを safelist に追加
+    'timeline-time-badge',
+    'timeline-task-card',
+    'timeline-task-container',
+    'timeline-task-content',
+    'timeline-task-button',
+    'timeline-progress-indicator',
+    // 動的に生成される可能性のあるクラス
+    'bg-orange-50',
+    'bg-blue-50',
+    'bg-purple-50',
+    'bg-gray-50',
+    'border-orange-300',
+    'border-blue-300',
+    'border-purple-300',
+    'border-gray-300',
+    'text-orange-800',
+    'text-blue-800',
+    'text-purple-800',
+    'text-gray-700',
+    'bg-orange-200',
+    'bg-blue-200',
+    'bg-purple-200',
+    'bg-gray-200',
+    // z-index 関連
+    {
+      pattern: /z-\d+/,
+    },
+    // ボーダー幅
+    {
+      pattern: /border-\d+/,
+    }
+  ],
   theme: {
     extend: {
       colors: {

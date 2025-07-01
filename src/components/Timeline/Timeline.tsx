@@ -691,16 +691,17 @@ export function Timeline({
                         }`}>
                         {isActive ? (
                           // Play icon for active
-                          <div className="w-0 h-0 border-l-[6px] border-l-white border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-1"></div>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                          </svg>
                         ) : task.completed ? (
                           // Check icon for completed
                           <Check className="w-4 h-4 text-white" />
                         ) : isPast ? (
                           // Pause icon for past
-                          <div className="flex space-x-1">
-                            <div className="w-1 h-3 bg-white"></div>
-                            <div className="w-1 h-3 bg-white"></div>
-                          </div>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
                         ) : (
                           // Circle icon for pending
                           <div className="w-3 h-3 rounded-full border-2 border-white"></div>

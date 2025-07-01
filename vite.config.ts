@@ -26,8 +26,23 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,         // 本番でもソースマップ生成（デバッグ用）
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          lucide: ['lucide-react'],
+        },
+      },
+    },
+    cssCodeSplit: false,     // CSS分割を無効化してビルドエラーを回避
   },
   css: {
     devSourcemap: true,      // CSS開発時ソースマップ
+    postcss: {
+      plugins: [
+        require('tailwindcss'),
+        require('autoprefixer'),
+      ],
+    },
   },
 });
