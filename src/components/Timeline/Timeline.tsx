@@ -72,6 +72,13 @@ export function Timeline({
   const [dateEditingTaskId, setDateEditingTaskId] = useState<string | null>(null);
   const [editingDate, setEditingDate] = useState('');
 
+  // 日付・時間編集モーダルの状態管理
+  const [showDateTimeModal, setShowDateTimeModal] = useState(false);
+  const [editingDateTimeTask, setEditingDateTimeTask] = useState<Task | null>(null);
+  const [modalEditingDate, setModalEditingDate] = useState('');
+  const [modalEditingStartTime, setModalEditingStartTime] = useState('');
+  const [modalEditingEndTime, setModalEditingEndTime] = useState('');
+
   // 🎯 ローディング状態管理
   const [loadingStates, setLoadingStates] = useState<Record<string, LoadingState>>({});
   const [toastState, setToastState] = useState<{ visible: boolean; state: LoadingState; message: string }>({
@@ -518,6 +525,54 @@ export function Timeline({
       onTaskUpdate(dateEditingTaskId, { date: editingDate });
       setDateEditingTaskId(null);
       setEditingDate('');
+    }
+  };
+
+  // 日付・時間編集モーダル関数
+  const startDateTimeEditing = (task: Task) => {
+    setEditingDateTimeTask(task);
+    setModalEditingDate(task.date);
+    setModalEditingStartTime(task.startTime);
+    setModalEditingEndTime(task.endTime);
+    setShowDateTimeModal(true);
+    hideContextMenu();
+  };
+
+  const cancelDateTimeEditing = () => {
+    setShowDateTimeModal(false);
+    setEditingDateTimeTask(null);
+    setModalEditingDate('');
+    setModalEditingStartTime('');
+    setModalEditingEndTime('');
+  };
+
+  const saveDateTimeEdit = () => {
+    if (editingDateTimeTask && modalEditingDate && modalEditingStartTime && modalEditingEndTime) {
+      // 終了時間が開始時間より早い場合の修正
+      const startMinutes = parseInt(modalEditingStartTime.split(':')[0]) * 60 + parseInt(modalEditingStartTime.split(':')[1]);
+      const endMinutes = parseInt(modalEditingEndTime.split(':')[0]) * 60 + parseInt(modalEditingEndTime.split(':')[1]);
+
+      if (endMinutes <= startMinutes) {
+        alert('終了時間は開始時間より後に設定してください');
+        return;
+      }
+
+      onTaskUpdate(editingDateTimeTask.id, {
+        date: modalEditingDate,
+        startTime: modalEditingStartTime,
+        endTime: modalEditingEndTime
+      });
+
+      cancelDateTimeEditing();
+    }
+  };
+
+  // 日付・時間編集モーダルのキーハンドリング
+  const handleDateTimeModalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && modalEditingDate && modalEditingStartTime && modalEditingEndTime) {
+      saveDateTimeEdit();
+    } else if (e.key === 'Escape') {
+      cancelDateTimeEditing();
     }
   };
 
@@ -1006,11 +1061,11 @@ export function Timeline({
             <span className="text-sm">タスク名を変更</span>
           </button>
           <button
-            onClick={() => startDateEditing(contextMenu.task!)}
+            onClick={() => startDateTimeEditing(contextMenu.task!)}
             className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center space-x-2"
           >
             <Calendar className="w-4 h-4 text-green-600" />
-            <span className="text-sm">日付を変更</span>
+            <span className="text-sm">日付・時間を変更</span>
           </button>
           <hr className="my-1" />
           <button
@@ -1077,6 +1132,99 @@ export function Timeline({
               <button
                 onClick={saveDateEdit}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 日付・時間編集モーダル */}
+      {showDateTimeModal && editingDateTimeTask && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onKeyDown={handleDateTimeModalKeyDown}
+        >
+          <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 flex items-center space-x-2">
+              <Calendar className="w-5 h-5 text-green-600" />
+              <span>日付・時間を変更</span>
+            </h3>
+
+            <div className="space-y-4">
+              {/* 現在の設定表示 */}
+              <div className="p-3 bg-gray-50 rounded-md">
+                <div className="text-sm font-medium text-gray-700 mb-1">現在の設定</div>
+                <div className="text-sm text-gray-600">
+                  {format(new Date(editingDateTimeTask.date), 'yyyy年M月d日(E)', { locale: ja })} {editingDateTimeTask.startTime} - {editingDateTimeTask.endTime}
+                </div>
+              </div>
+
+              {/* 日付入力 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  📅 日付
+                </label>
+                <input
+                  type="date"
+                  value={modalEditingDate}
+                  onChange={(e) => setModalEditingDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              {/* 時間入力 */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    🕒 開始時間
+                  </label>
+                  <input
+                    type="time"
+                    value={modalEditingStartTime}
+                    onChange={(e) => setModalEditingStartTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    🕕 終了時間
+                  </label>
+                  <input
+                    type="time"
+                    value={modalEditingEndTime}
+                    onChange={(e) => setModalEditingEndTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+
+              {/* プレビュー */}
+              <div className="p-3 bg-green-50 rounded-md border border-green-200">
+                <div className="text-sm font-medium text-green-800 mb-1">変更後のプレビュー</div>
+                <div className="text-sm text-green-700">
+                  {modalEditingDate && format(new Date(modalEditingDate), 'yyyy年M月d日(E)', { locale: ja })} {modalEditingStartTime} - {modalEditingEndTime}
+                  {modalEditingStartTime && modalEditingEndTime && (
+                    <span className="ml-2 text-xs">
+                      (所要時間: {Math.floor((parseInt(modalEditingEndTime.split(':')[0]) * 60 + parseInt(modalEditingEndTime.split(':')[1]) - parseInt(modalEditingStartTime.split(':')[0]) * 60 - parseInt(modalEditingStartTime.split(':')[1])) / 60)}時間{(parseInt(modalEditingEndTime.split(':')[0]) * 60 + parseInt(modalEditingEndTime.split(':')[1]) - parseInt(modalEditingStartTime.split(':')[0]) * 60 - parseInt(modalEditingStartTime.split(':')[1])) % 60}分)
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 mt-6">
+              <button
+                onClick={cancelDateTimeEditing}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={saveDateTimeEdit}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                disabled={!modalEditingDate || !modalEditingStartTime || !modalEditingEndTime}
               >
                 保存
               </button>
