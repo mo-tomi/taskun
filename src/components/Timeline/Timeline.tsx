@@ -1,7 +1,7 @@
 import { Task, MultiDayTaskSegment } from '../../types';
 import { format, addDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Check, Clock, MoreHorizontal, Play, Pause, ArrowRight } from 'lucide-react';
+import { Check, Clock, MoreHorizontal, Play, Pause, ArrowRight, Timer, Edit3, Trash2, Calendar } from 'lucide-react';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { ProgressGauge, LinearProgress } from './ProgressGauge';
 import { calculateTaskProgress } from '../../utils/timeUtils';
@@ -62,6 +62,16 @@ export function Timeline({
   const [editingStartTime, setEditingStartTime] = useState('');
   const [editingEndTime, setEditingEndTime] = useState('');
 
+  // 右クリックメニューの状態管理
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    task: Task | null;
+  }>({ visible: false, x: 0, y: 0, task: null });
+  const [dateEditingTaskId, setDateEditingTaskId] = useState<string | null>(null);
+  const [editingDate, setEditingDate] = useState('');
+
   // 🎯 ローディング状態管理
   const [loadingStates, setLoadingStates] = useState<Record<string, LoadingState>>({});
   const [toastState, setToastState] = useState<{ visible: boolean; state: LoadingState; message: string }>({
@@ -104,6 +114,18 @@ export function Timeline({
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // 右クリックメニューを隠すためのクリックイベント
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (contextMenu.visible) {
+        hideContextMenu();
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [contextMenu.visible]);
 
   // ♾️ 日付自動更新（無限スクロール）
   useEffect(() => {
@@ -465,6 +487,52 @@ export function Timeline({
     return remainingMinutes > 0 ? `${hours}時間${remainingMinutes}分` : `${hours}時間`;
   };
 
+  // 右クリックメニューのハンドラー
+  const handleContextMenu = (e: React.MouseEvent, task: Task) => {
+    e.preventDefault();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      task: task
+    });
+  };
+
+  const hideContextMenu = () => {
+    setContextMenu({ visible: false, x: 0, y: 0, task: null });
+  };
+
+  const startDateEditing = (task: Task) => {
+    setDateEditingTaskId(task.id);
+    setEditingDate(task.date);
+    hideContextMenu();
+  };
+
+  const cancelDateEditing = () => {
+    setDateEditingTaskId(null);
+    setEditingDate('');
+  };
+
+  const saveDateEdit = () => {
+    if (dateEditingTaskId && editingDate) {
+      onTaskUpdate(dateEditingTaskId, { date: editingDate });
+      setDateEditingTaskId(null);
+      setEditingDate('');
+    }
+  };
+
+  const handleDeleteTask = (task: Task) => {
+    if (confirm(`「${task.title}」を削除しますか？`)) {
+      onTaskDelete(task.id);
+    }
+    hideContextMenu();
+  };
+
+  const handleEditTitle = (task: Task) => {
+    startEditing(task);
+    hideContextMenu();
+  };
+
   if (sortedTasks.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-500">
@@ -728,7 +796,10 @@ export function Timeline({
                     </div>
 
                     {/* メインコンテンツエリア */}
-                    <div className="flex items-center h-full p-3 pt-4">
+                    <div
+                      className="flex items-center h-full p-3 pt-4"
+                      onContextMenu={(e) => handleContextMenu(e, task)}
+                    >
                       {/* ステータスアイコン */}
                       <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mr-3 ${isActive
                         ? 'bg-orange-500'
@@ -917,6 +988,103 @@ export function Timeline({
         onDismiss={hideToast}
         autoHideDuration={3000}
       />
+
+      {/* 右クリックコンテキストメニュー */}
+      {contextMenu.visible && contextMenu.task && (
+        <div
+          className="fixed bg-white border border-gray-300 rounded-lg shadow-lg py-2 z-50"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => handleEditTitle(contextMenu.task!)}
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center space-x-2"
+          >
+            <Edit3 className="w-4 h-4 text-blue-600" />
+            <span className="text-sm">タスク名を変更</span>
+          </button>
+          <button
+            onClick={() => startDateEditing(contextMenu.task!)}
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center space-x-2"
+          >
+            <Calendar className="w-4 h-4 text-green-600" />
+            <span className="text-sm">日付を変更</span>
+          </button>
+          <hr className="my-1" />
+          <button
+            onClick={() => handleDeleteTask(contextMenu.task!)}
+            className="w-full px-4 py-2 text-left hover:bg-red-50 text-red-600 flex items-center space-x-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="text-sm">削除</span>
+          </button>
+        </div>
+      )}
+
+      {/* タスク名編集モーダル */}
+      {editingTaskId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">タスク名を変更</h3>
+            <input
+              type="text"
+              value={editingTitle}
+              onChange={(e) => setEditingTitle(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="タスク名を入力..."
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                onClick={cancelEditing}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={saveEdit}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 日付編集モーダル */}
+      {dateEditingTaskId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">日付を変更</h3>
+            <input
+              type="date"
+              value={editingDate}
+              onChange={(e) => setEditingDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                onClick={cancelDateEditing}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={saveDateEdit}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
