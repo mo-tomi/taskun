@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, addDays, subDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, BarChart3, Sun, Moon, Monitor, List, Plus, Calendar, Clock, Trash2, ArrowRight, Tag, CheckCircle2, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, List, Plus, Calendar, Clock, Trash2, ArrowRight, Tag, CheckCircle2, Circle } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
 import { Timeline } from './components/Timeline/Timeline';
@@ -9,12 +9,10 @@ import { TimelineMultiDay } from './components/Timeline/TimelineMultiDay'; // �
 import { FreeTimeIndicator } from './components/Timeline/FreeTimeIndicator'; // ✨ 空き時間可視化
 import { AutoAdjustment } from './components/Timeline/AutoAdjustment'; // 🔄 自動調整機能
 import { QuickAdd } from './components/Inbox/QuickAdd';
-import { StatsModal } from './components/Stats/StatsModal';
 import { EnergyTracker } from './components/Energy/EnergyTracker';
 
 import { useTasks } from './hooks/useTasks';
 import { useEnergyTracking } from './hooks/useEnergyTracking';
-import { useTheme } from './hooks/useTheme';
 import { useTodos } from './hooks/useTodos'; // 📝 Todoリスト機能
 import { Task, TodoItem } from './types';
 
@@ -25,7 +23,6 @@ function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-  const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   // 🎨 新機能の状態管理
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -38,7 +35,6 @@ function App() {
   const [selectedTodos, setSelectedTodos] = useState<Set<string>>(new Set());
 
   // 🎯 新機能のフック
-  const { theme, toggleTheme } = useTheme();
 
   const {
     tasks,
@@ -247,30 +243,14 @@ function App() {
           <div className="flex items-center space-x-1">
             <button
               onClick={() => setShowTodoList(true)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
               title="タスク待機リスト (T)"
             >
               <List className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => setIsStatsOpen(true)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              title="統計 (A)"
-            >
-              <BarChart3 className="w-5 h-5" />
-            </button>
 
-            <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-2" />
 
-            <button
-              onClick={toggleTheme}
-              className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-orange-600"
-              title="テーマ切り替え"
-            >
-              {theme === 'light' ? <Moon className="w-5 h-5" /> :
-                theme === 'dark' ? <Sun className="w-5 h-5" /> :
-                  <Monitor className="w-5 h-5" />}
-            </button>
+
           </div>
         </div>
 
@@ -515,13 +495,6 @@ function App() {
       />
 
       {/* Modals */}
-      <StatsModal
-        isOpen={isStatsOpen}
-        onClose={() => setIsStatsOpen(false)}
-        tasks={tasks}
-        habits={habits}
-        getHabitStreak={getHabitStreak}
-      />
 
       {/* 詳細分析 */}
       <SimpleAnalytics

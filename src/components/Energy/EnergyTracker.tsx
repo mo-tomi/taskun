@@ -221,13 +221,7 @@ export function EnergyTracker({
             </div>
           )}
 
-          {/* タスクがない場合 */}
-          {!currentTask && !nextTask && (
-            <div className="mb-3 p-2 bg-gray-50 border border-gray-200 rounded-md">
-              <div className="text-xs font-medium text-gray-600 mb-1">✅ お疲れ様</div>
-              <div className="text-sm text-gray-700">今日のタスクは完了です</div>
-            </div>
-          )}
+
         </div>
         {/* 常時表示エネルギースライダー */}
         <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
