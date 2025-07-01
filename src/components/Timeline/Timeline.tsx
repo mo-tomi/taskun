@@ -604,8 +604,8 @@ export function Timeline({
   const timeSlots = Array.from({ length: 18 }, (_, i) => 6 + i);
 
   // 時間軸の縦方向間隔（1時間あたりのピクセル数）
-  // 64px = 標準, 96px = 1.5倍広い, 128px = 2倍広い
-  const PIXELS_PER_HOUR = 96;
+  // 64px = 標準, 96px = 1.5倍広い, 128px = 2倍広い, 192px = 3倍広い
+  const PIXELS_PER_HOUR = 192;
   const PIXELS_PER_MINUTE = PIXELS_PER_HOUR / 60;
 
   // タスクカード間のギャップ（ピクセル）
