@@ -416,6 +416,55 @@ export function Timeline({
     return colors[task.color] || colors.coral;
   };
 
+  // 残り時間の計算（分単位）
+  const calculateRemainingTime = (endTime: string): number => {
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    const endTotalMinutes = endHour * 60 + endMinute;
+    const currentTotalMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+    return Math.max(0, endTotalMinutes - currentTotalMinutes);
+  };
+
+  // 進行状況の計算（0-100%）
+  const calculateProgress = (startTime: string, endTime: string): number => {
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    const currentTotalMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+
+    if (currentTotalMinutes < startTotalMinutes) return 0;
+    if (currentTotalMinutes >= endTotalMinutes) return 100;
+
+    const totalDuration = endTotalMinutes - startTotalMinutes;
+    const elapsed = currentTotalMinutes - startTotalMinutes;
+    return Math.round((elapsed / totalDuration) * 100);
+  };
+
+  // タスクの現在状態を判定
+  const getTaskStatus = (task: Task, startTime: string, endTime: string) => {
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    const currentTotalMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+
+    if (task.completed) return 'completed';
+    if (currentTotalMinutes < startTotalMinutes) return 'waiting';
+    if (currentTotalMinutes >= endTotalMinutes) return 'overdue';
+    return 'active';
+  };
+
+  // 残り時間の表示形式を整形
+  const formatRemainingTime = (minutes: number): string => {
+    if (minutes === 0) return '完了';
+    if (minutes < 60) return `${minutes}分`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}時間${remainingMinutes}分` : `${hours}時間`;
+  };
+
   if (sortedTasks.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-500">
@@ -749,6 +798,30 @@ export function Timeline({
                                   : '待機中'
                           }
                         </div>
+
+                        {/* リアルタイム残り時間表示（アクティブタスクのみ） */}
+                        {isActive && !task.completed && (
+                          <div className="text-xs mt-1 flex items-center space-x-1 text-orange-800 font-bold">
+                            <Timer className="w-3 h-3" />
+                            <span>残り: {formatRemainingTime(calculateRemainingTime(displayEndTime))}</span>
+                            {calculateProgress(displayStartTime, displayEndTime) > 0 && (
+                              <span className="text-orange-600">
+                                ({calculateProgress(displayStartTime, displayEndTime)}%)
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 次のタスクまでの時間表示（完了済みタスクのみ） */}
+                        {task.completed && getNextTask() && (
+                          <div className="text-xs mt-1 flex items-center space-x-1 text-blue-600">
+                            <Clock className="w-3 h-3" />
+                            <span>次のタスクまで: {formatRemainingTime(
+                              timeToMinutes(getNextTask()?.startTime || '00:00') -
+                              (currentTime.getHours() * 60 + currentTime.getMinutes())
+                            )}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* チェックボタン */}
