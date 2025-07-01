@@ -631,7 +631,8 @@ export function Timeline({
                     width: `${task.layout.width * 100}%`,
                     paddingLeft: '0.25rem',
                     paddingRight: '0.25rem',
-                    marginBottom: '2px', // カード間の間隔を確保
+                    marginBottom: '8px', // カード間の間隔を拡大
+                    zIndex: task.completed ? 1 : isActive ? 10 : isPast ? 2 : 5, // 明確なz-index指定
                   }}
                   draggable={!editingTaskId && !editingTimeTaskId}
                   onDragStart={(e) => handleDragStart(e, task)}
@@ -666,7 +667,7 @@ export function Timeline({
                     }}
                   >
                     {/* 時刻バッジ（独立表示） */}
-                    <div className={`absolute -top-2 left-2 px-2 py-1 rounded-full text-xs font-bold shadow-sm ${isActive
+                    <div className={`timeline-time-badge px-2 py-1 rounded-full text-xs font-bold shadow-sm ${isActive
                       ? 'bg-orange-200 text-orange-800 border border-orange-300'
                       : task.completed
                         ? 'bg-blue-200 text-blue-800 border border-blue-300'

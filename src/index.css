@@ -1633,7 +1633,7 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
   /* エネルギートラッカーの高さ分 */
 }
 
-/* 🎯 タイムライン表示改善 - v1.2.10 */
+/* 🎯 タイムライン表示改善 - v1.2.11 */
 .timeline-task-container {
   /* 時刻軸との衝突防止 */
   padding-left: 16px;
@@ -1643,6 +1643,19 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
 
   /* z-index管理: 重なり順序の明確化 */
   z-index: 1;
+
+  /* カード重なり防止 */
+  position: relative;
+}
+
+/* 時刻バッジの確実な表示 */
+.timeline-time-badge {
+  position: absolute !important;
+  top: -8px !important;
+  left: 8px !important;
+  z-index: 10 !important;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .timeline-task-card {
@@ -1651,35 +1664,49 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
 
   /* ホバー時の優先表示 */
   transition: z-index 0.1s ease, transform 0.2s ease, box-shadow 0.2s ease;
+
+  /* カード間の最小間隔を強制 */
+  margin-bottom: 8px !important;
+
+  /* 重なり防止のための背景確保 */
+  background-clip: padding-box;
 }
 
 .timeline-task-card:hover {
-  z-index: 10;
+  z-index: 15 !important;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .timeline-task-card.active {
-  z-index: 8;
+  z-index: 12 !important;
 }
 
 .timeline-task-card.dragging {
-  z-index: 20;
+  z-index: 25 !important;
 }
 
 .timeline-task-card.completed {
-  z-index: 1;
+  z-index: 1 !important;
 }
 
-/* モバイル表示: カード間隔8px */
+/* 進捗表示の改善 */
+.timeline-progress-indicator {
+  min-width: 24px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #64748b;
+}
+
+/* レスポンシブ調整 */
 @media (max-width: 768px) {
-  .timeline-task-container {
-    gap: 8px;
-    padding-left: 12px;
+  .timeline-time-badge {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
   }
 
   .timeline-task-card {
-    font-size: 0.75rem;
+    margin-bottom: 6px !important;
   }
 }
 
