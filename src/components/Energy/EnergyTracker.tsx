@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Battery, TrendingUp, Heart, Clock, Play, Sliders, GripHorizontal } from 'lucide-react';
+import { Battery, TrendingUp, Heart, Play, Sliders, GripHorizontal } from 'lucide-react';
 import { EnergyLevel, Task } from '../../types';
 import { format } from 'date-fns';
 import { EnergyChart } from './EnergyChart';
@@ -154,15 +154,6 @@ export function EnergyTracker({
       <div className="h-full pt-2 overflow-y-auto">
         {/* リアルタイム進捗表示 */}
         <div className="px-4 py-3 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-blue-600 animate-pulse" />
-              <span className="text-base font-bold text-blue-700">現在時刻</span>
-            </div>
-            <span className="text-2xl font-extrabold text-blue-700 tracking-widest font-mono drop-shadow">
-              {format(currentTime, 'HH:mm:ss')}
-            </span>
-          </div>
 
           {/* 現在のタスク表示 */}
           {currentTask && (
