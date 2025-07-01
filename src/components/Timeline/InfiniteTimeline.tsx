@@ -35,6 +35,8 @@ const InfiniteTimeline: React.FC<InfiniteTimelineProps> = ({
     const [timelineData, setTimelineData] = useState<TimelineData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [centerDateIndex, setCenterDateIndex] = useState(1);
+    const lastLoadTime = useRef<number>(0);
+    const loadCooldown = 1000; // 1秒間のクールダウン
 
     // 指定した日付のデータを生成
     const generateTimelineData = useCallback((date: Date): TimelineData => {
@@ -76,31 +78,56 @@ const InfiniteTimeline: React.FC<InfiniteTimelineProps> = ({
         const container = containerRef.current;
         if (!container || isLoading) return;
 
+        const now = Date.now();
+        if (now - lastLoadTime.current < loadCooldown) return;
+
         const { scrollTop, scrollHeight, clientHeight } = container;
-        const scrollPercentage = scrollTop / (scrollHeight - clientHeight);
 
         // 上端近くまでスクロールした場合（前日を追加）
-        if (scrollPercentage < 0.1 && timelineData.length > 0) {
+        if (scrollTop < 300 && timelineData.length > 0) {
             setIsLoading(true);
+            lastLoadTime.current = now;
 
             const firstDate = timelineData[0].date;
             const prevDate = subDays(firstDate, 1);
             const newData = generateTimelineData(prevDate);
 
+            // 現在見えている最初の要素を特定
+            const visibleElements = container.querySelectorAll('[data-timeline-date]');
+            let anchorElement: Element | null = null;
+            let anchorOffset = 0;
+
+            for (const element of visibleElements) {
+                const rect = element.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                if (rect.top <= containerRect.top + 100) {
+                    anchorElement = element;
+                    anchorOffset = rect.top - containerRect.top;
+                }
+            }
+
             setTimelineData(prev => [newData, ...prev]);
             setCenterDateIndex(prev => prev + 1);
 
-            // スクロール位置を調整して、ユーザーが見ていた位置を維持
-            setTimeout(() => {
-                const newScrollTop = container.scrollHeight - (scrollHeight - scrollTop);
-                container.scrollTop = Math.max(0, newScrollTop);
-                setIsLoading(false);
-            }, 50);
+            // DOM更新を待ってからスクロール位置を調整
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (anchorElement) {
+                        const newRect = anchorElement.getBoundingClientRect();
+                        const containerRect = container.getBoundingClientRect();
+                        const newOffset = newRect.top - containerRect.top;
+                        const scrollAdjustment = newOffset - anchorOffset;
+                        container.scrollTop = container.scrollTop - scrollAdjustment;
+                    }
+                    setIsLoading(false);
+                });
+            });
         }
 
         // 下端近くまでスクロールした場合（翌日を追加）
-        else if (scrollPercentage > 0.9 && timelineData.length > 0) {
+        else if (scrollTop > scrollHeight - clientHeight - 300 && timelineData.length > 0) {
             setIsLoading(true);
+            lastLoadTime.current = now;
 
             const lastDate = timelineData[timelineData.length - 1].date;
             const nextDate = addDays(lastDate, 1);
@@ -110,7 +137,7 @@ const InfiniteTimeline: React.FC<InfiniteTimelineProps> = ({
 
             setTimeout(() => {
                 setIsLoading(false);
-            }, 50);
+            }, 100);
         }
     }, [timelineData, isLoading, generateTimelineData]);
 
@@ -148,23 +175,30 @@ const InfiniteTimeline: React.FC<InfiniteTimelineProps> = ({
 
     // スクロールイベントのデバウンス処理
     const debouncedHandleScroll = useCallback(() => {
-        const timeoutId = setTimeout(() => {
-            handleScroll();
-            updateCenterDate();
-        }, 100);
+        let timeoutId: number;
 
-        return () => clearTimeout(timeoutId);
+        const debounced = () => {
+            clearTimeout(timeoutId);
+            timeoutId = window.setTimeout(() => {
+                handleScroll();
+                updateCenterDate();
+            }, 150);
+        };
+
+        return debounced;
     }, [handleScroll, updateCenterDate]);
+
+    const debouncedScrollHandler = debouncedHandleScroll();
 
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
 
-        container.addEventListener('scroll', debouncedHandleScroll);
+        container.addEventListener('scroll', debouncedScrollHandler);
         return () => {
-            container.removeEventListener('scroll', debouncedHandleScroll);
+            container.removeEventListener('scroll', debouncedScrollHandler);
         };
-    }, [debouncedHandleScroll]);
+    }, [debouncedScrollHandler]);
 
     // 特定の日付にスクロール
     const scrollToDate = useCallback((targetDate: Date) => {
