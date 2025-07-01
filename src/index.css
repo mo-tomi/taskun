@@ -1819,3 +1819,9 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
   background-color: rgba(254, 226, 226, 0.95) !important;
   border-left: 4px solid #ef4444 !important;
 }
+
+/* --- タスクカードの重なりを防ぐミニ修正 --- */
+.timeline-task-card+.timeline-task-card {
+  margin-top: 4px;
+  /* 1〜4 の好きな数字に調整してOK */
+}
