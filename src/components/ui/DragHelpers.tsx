@@ -1,5 +1,6 @@
-import React from 'react';
-import { Move, Clock, ArrowUpDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Move, Clock, ArrowUpDown, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, MousePointer, Hand } from 'lucide-react';
 
 // 🎯 ドラッグ状態の型定義
 export interface DragState {
@@ -338,4 +339,276 @@ export const dragUtils = {
     }
 };
 
-export default DragGuideline; 
+interface DragHelpersProps {
+    isDragging: boolean;
+    dragType: 'task' | 'resize' | 'reorder' | null;
+    canDrop?: boolean;
+    dropZoneActive?: boolean;
+    children?: React.ReactNode;
+}
+
+const DragHelpers: React.FC<DragHelpersProps> = ({
+    isDragging,
+    dragType,
+    canDrop = false,
+    dropZoneActive = false,
+    children
+}) => {
+    const [showGuide, setShowGuide] = useState(false);
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+    useEffect(() => {
+        if (isDragging) {
+            setShowGuide(true);
+
+            const handleMouseMove = (e: MouseEvent) => {
+                setMousePosition({ x: e.clientX, y: e.clientY });
+            };
+
+            document.addEventListener('mousemove', handleMouseMove);
+            return () => document.removeEventListener('mousemove', handleMouseMove);
+        } else {
+            setTimeout(() => setShowGuide(false), 200);
+        }
+    }, [isDragging]);
+
+    const getGuidanceText = () => {
+        switch (dragType) {
+            case 'task':
+                return 'タスクを別の時間スロットにドロップして移動';
+            case 'resize':
+                return 'ドラッグしてタスクの長さを調整';
+            case 'reorder':
+                return 'ドラッグして順序を変更';
+            default:
+                return 'ドラッグして移動';
+        }
+    };
+
+    const getIconForDragType = () => {
+        switch (dragType) {
+            case 'task':
+                return <Move className="w-4 h-4" />;
+            case 'resize':
+                return <ArrowUp className="w-4 h-4" />;
+            case 'reorder':
+                return <Hand className="w-4 h-4" />;
+            default:
+                return <MousePointer className="w-4 h-4" />;
+        }
+    };
+
+    return (
+        <>
+            {children}
+
+            {/* ドラッグガイドライン */}
+            <AnimatePresence>
+                {showGuide && isDragging && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 pointer-events-none z-50"
+                    >
+                        {/* マウスカーソル追従ガイド */}
+                        <motion.div
+                            style={{
+                                left: mousePosition.x + 10,
+                                top: mousePosition.y - 30
+                            }}
+                            className="absolute bg-black/80 text-white text-xs py-2 px-3 rounded-lg shadow-lg flex items-center space-x-2 backdrop-blur-sm"
+                        >
+                            {getIconForDragType()}
+                            <span>{getGuidanceText()}</span>
+                        </motion.div>
+
+                        {/* グリッドガイドライン（タスクドラッグ時） */}
+                        {dragType === 'task' && (
+                            <div className="absolute inset-0 bg-blue-500/5">
+                                <div className="relative h-full w-full">
+                                    {/* 時間グリッドライン */}
+                                    {Array.from({ length: 24 }, (_, i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 0.3 }}
+                                            className="absolute left-0 right-0 border-t border-dashed border-blue-400"
+                                            style={{
+                                                top: `${(i / 24) * 100}%`
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ドロップゾーンヒント */}
+                        {canDrop && (
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center space-x-2"
+                            >
+                                <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+                                <span>ここにドロップできます</span>
+                            </motion.div>
+                        )}
+
+                        {/* アクティブドロップゾーン */}
+                        {dropZoneActive && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="absolute inset-4 border-2 border-dashed border-green-400 bg-green-50/50 dark:bg-green-900/20 rounded-lg"
+                            />
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </>
+    );
+};
+
+// ホバー強化コンポーネント
+interface EnhancedHoverProps {
+    children: React.ReactNode;
+    hoverContent?: React.ReactNode;
+    delay?: number;
+    position?: 'top' | 'bottom' | 'left' | 'right';
+    className?: string;
+    disabled?: boolean;
+}
+
+export const EnhancedHover: React.FC<EnhancedHoverProps> = ({
+    children,
+    hoverContent,
+    delay = 100,
+    position = 'top',
+    className = '',
+    disabled = false
+}) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const [showContent, setShowContent] = useState(false);
+
+    useEffect(() => {
+        if (isHovered && !disabled) {
+            const timer = setTimeout(() => setShowContent(true), delay);
+            return () => clearTimeout(timer);
+        } else {
+            setShowContent(false);
+        }
+    }, [isHovered, delay, disabled]);
+
+    const getPositionClasses = () => {
+        switch (position) {
+            case 'top':
+                return 'bottom-full left-1/2 transform -translate-x-1/2 mb-2';
+            case 'bottom':
+                return 'top-full left-1/2 transform -translate-x-1/2 mt-2';
+            case 'left':
+                return 'right-full top-1/2 transform -translate-y-1/2 mr-2';
+            case 'right':
+                return 'left-full top-1/2 transform -translate-y-1/2 ml-2';
+        }
+    };
+
+    return (
+        <div
+            className={`relative ${className}`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {children}
+
+            <AnimatePresence>
+                {showContent && hoverContent && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.15 }}
+                        className={`
+              absolute z-30 pointer-events-none
+              ${getPositionClasses()}
+            `}
+                    >
+                        <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs py-2 px-3 rounded-lg shadow-lg max-w-xs">
+                            {hoverContent}
+
+                            {/* ツールチップの矢印 */}
+                            <div className={`
+                absolute w-2 h-2 bg-gray-900 dark:bg-gray-100 transform rotate-45
+                ${position === 'top' ? 'top-full left-1/2 -translate-x-1/2 -mt-1' : ''}
+                ${position === 'bottom' ? 'bottom-full left-1/2 -translate-x-1/2 -mb-1' : ''}
+                ${position === 'left' ? 'left-full top-1/2 -translate-y-1/2 -ml-1' : ''}
+                ${position === 'right' ? 'right-full top-1/2 -translate-y-1/2 -mr-1' : ''}
+              `} />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// クリック効果の強化
+interface ClickEffectProps {
+    children: React.ReactNode;
+    rippleColor?: string;
+    className?: string;
+}
+
+export const ClickEffect: React.FC<ClickEffectProps> = ({
+    children,
+    rippleColor = 'rgba(59, 130, 246, 0.5)',
+    className = ''
+}) => {
+    const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
+
+    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const id = Date.now();
+
+        setRipples(prev => [...prev, { id, x, y }]);
+
+        // リップルを自動削除
+        setTimeout(() => {
+            setRipples(prev => prev.filter(ripple => ripple.id !== id));
+        }, 600);
+    };
+
+    return (
+        <div
+            className={`relative overflow-hidden ${className}`}
+            onMouseDown={handleClick}
+        >
+            {children}
+
+            {/* リップルエフェクト */}
+            {ripples.map(ripple => (
+                <motion.div
+                    key={ripple.id}
+                    initial={{ scale: 0, opacity: 0.8 }}
+                    animate={{ scale: 4, opacity: 0 }}
+                    transition={{ duration: 0.6 }}
+                    style={{
+                        position: 'absolute',
+                        left: ripple.x,
+                        top: ripple.y,
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        backgroundColor: rippleColor,
+                        transform: 'translate(-50%, -50%)',
+                        pointerEvents: 'none'
+                    }}
+                />
+            ))}
+        </div>
+    );
+};
+
+export default DragHelpers; 

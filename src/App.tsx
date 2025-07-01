@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, addDays, subDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, List, Plus, Calendar, Clock, Trash2, ArrowRight, Tag, CheckCircle2, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, List, Plus, Calendar, Clock, Trash2, ArrowRight, Tag, CheckCircle2, Circle, Settings, HelpCircle } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
 import { Timeline } from './components/Timeline/Timeline';
@@ -14,10 +14,16 @@ import { EnergyTracker } from './components/Energy/EnergyTracker';
 import { useTasks } from './hooks/useTasks';
 import { useEnergyTracking } from './hooks/useEnergyTracking';
 import { useTodos } from './hooks/useTodos'; // 📝 Todoリスト機能
+import { useLocalStorage } from './hooks/useLocalStorage';
 import { Task, TodoItem } from './types';
 
 // 新機能コンポーネント
 import SimpleAnalytics from './components/Analytics/SimpleAnalytics';
+import OnboardingTour from './components/Onboarding/OnboardingTour';
+import SmartSuggestions from './components/SmartSuggestions/SmartSuggestions';
+import PersonalizationSettingsComponent, { PersonalizationSettings } from './components/Settings/PersonalizationSettings';
+import { useFeedback } from './components/Feedback/FeedbackSystem';
+import { useEnhancedKeyboardShortcuts } from './hooks/useEnhancedKeyboardShortcuts';
 
 function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -34,7 +40,101 @@ function App() {
   const [newTodoPriority, setNewTodoPriority] = useState<TodoItem['priority']>('medium');
   const [selectedTodos, setSelectedTodos] = useState<Set<string>>(new Set());
 
+  // 🚀 UX改善機能の状態管理
+  const [showOnboarding, setShowOnboarding] = useLocalStorage('taskun-first-visit', true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showSmartSuggestions, setShowSmartSuggestions] = useLocalStorage('taskun-smart-suggestions', true);
+
+  // パーソナライゼーション設定
+  const [settings, setSettings] = useLocalStorage<PersonalizationSettings>('taskun-settings', {
+    theme: 'auto',
+    accentColor: '#3B82F6',
+    fontSize: 'medium',
+    highContrast: false,
+    showCompletedTasks: true,
+    showEnergyLevels: true,
+    compactMode: false,
+    showAnimations: true,
+    soundEnabled: true,
+    taskReminders: true,
+    energyReminders: true,
+    defaultTaskDuration: 60,
+    workingHours: {
+      start: '09:00',
+      end: '18:00'
+    },
+    reducedMotion: false,
+    screenReaderOptimized: false,
+    keyboardNavigation: true
+  });
+
+  // フィードバックシステム
+  const { FeedbackSystem } = useFeedback();
+
   // 🎯 新機能のフック
+
+  // 拡張キーボードショートカット
+  const shortcutCallbacks = {
+    // 基本操作
+    onQuickAdd: () => setIsQuickAddOpen(true),
+    onSearch: () => console.log('Search functionality'),
+    onToggleTheme: () => console.log('Theme toggle'),
+    onShowStats: () => setShowAnalytics(true),
+    onShowHelp: () => console.log('Help'),
+
+    // ナビゲーション
+    onFocusToday: () => setCurrentDate(new Date()),
+    onNextDay: () => setCurrentDate(prev => addDays(prev, 1)),
+    onPrevDay: () => setCurrentDate(prev => subDays(prev, -1)),
+    onNextWeek: () => setCurrentDate(prev => addDays(prev, 7)),
+    onPrevWeek: () => setCurrentDate(prev => subDays(prev, -7)),
+    onGoToDate: () => console.log('Go to date'),
+
+    // タスク操作
+    onSelectAll: () => console.log('Select all'),
+    onDeleteSelected: () => console.log('Delete selected'),
+    onCompleteSelected: () => console.log('Complete selected'),
+    onDuplicateSelected: () => console.log('Duplicate selected'),
+    onEditSelected: () => console.log('Edit selected'),
+
+    // 表示・フィルタリング
+    onToggleCompletedTasks: () => setSettings(prev => ({ ...prev, showCompletedTasks: !prev.showCompletedTasks })),
+    onToggleHabits: () => console.log('Toggle habits'),
+    onToggleEnergyView: () => setSettings(prev => ({ ...prev, showEnergyLevels: !prev.showEnergyLevels })),
+    onToggleTodoList: () => setShowTodoList(prev => !prev),
+    onToggleAnalytics: () => setShowAnalytics(prev => !prev),
+
+    // クイックアクション
+    onQuickSchedule: () => console.log('Quick schedule'),
+    onAddBreak: () => console.log('Add break'),
+    onStartFocus: () => console.log('Start focus'),
+    onToggleTimeline: () => console.log('Toggle timeline'),
+
+    // 編集・操作
+    onUndo: () => console.log('Undo'),
+    onRedo: () => console.log('Redo'),
+    onSave: () => console.log('Save'),
+    onExport: () => console.log('Export'),
+
+    // エネルギー管理
+    onLogEnergy: () => console.log('Log energy'),
+    onEnergyBreak: () => console.log('Energy break'),
+
+    // アクセシビリティ
+    onToggleHighContrast: () => setSettings(prev => ({ ...prev, highContrast: !prev.highContrast })),
+    onIncreaseFontSize: () => setSettings(prev => ({
+      ...prev,
+      fontSize: prev.fontSize === 'small' ? 'medium' : prev.fontSize === 'medium' ? 'large' : 'large'
+    })),
+    onDecreaseFontSize: () => setSettings(prev => ({
+      ...prev,
+      fontSize: prev.fontSize === 'large' ? 'medium' : prev.fontSize === 'medium' ? 'small' : 'small'
+    }))
+  };
+
+  useEnhancedKeyboardShortcuts(shortcutCallbacks, settings.keyboardNavigation);
+
+  // 既存のフック
 
   const {
     tasks,
@@ -698,6 +798,88 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* 🚀 UX改善機能 */}
+
+      {/* オンボーディングツアー */}
+      <OnboardingTour
+        isVisible={showOnboarding}
+        onComplete={() => setShowOnboarding(false)}
+        onSkip={() => setShowOnboarding(false)}
+      />
+
+      {/* スマート提案 */}
+      {showSmartSuggestions && (
+        <SmartSuggestions
+          tasks={tasks}
+          energyLevels={energyLevels}
+          currentDate={currentDate}
+          onAddTask={(task) => {
+            addTask({
+              title: task.title || '新しいタスク',
+              startTime: task.startTime || '09:00',
+              endTime: task.endTime || '10:00',
+              date: task.date || format(currentDate, 'yyyy-MM-dd'),
+              color: task.color || 'blue',
+              completed: false,
+              isHabit: task.isHabit || false,
+              description: task.description || '',
+              subtasks: task.subtasks || [],
+              emoji: task.emoji,
+              customColor: task.customColor,
+            });
+          }}
+          onScheduleBreak={(startTime, duration) => {
+            const [hour, minute] = startTime.split(':').map(Number);
+            const endMinutes = hour * 60 + minute + duration;
+            const endHour = Math.floor(endMinutes / 60);
+            const endMin = endMinutes % 60;
+            const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+
+            addTask({
+              title: '休憩時間',
+              startTime,
+              endTime,
+              date: format(currentDate, 'yyyy-MM-dd'),
+              color: 'green',
+              completed: false,
+              isHabit: false,
+              description: '短い休憩でリフレッシュ',
+              subtasks: [],
+              emoji: '☕',
+            });
+          }}
+        />
+      )}
+
+      {/* パーソナライゼーション設定 */}
+      <PersonalizationSettingsComponent
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        currentSettings={settings}
+        onSave={setSettings}
+      />
+
+      {/* フィードバックシステム */}
+      <FeedbackSystem />
+
+      {/* ヘルプ・設定ボタン */}
+      <div className="fixed bottom-20 right-4 flex flex-col space-y-2">
+        <button
+          onClick={() => setShowSettings(true)}
+          className="p-3 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors"
+          title="設定"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => setShowOnboarding(true)}
+          className="p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          title="ヘルプツアー"
+        >
+          <HelpCircle className="w-5 h-5" />
+        </button>
+      </div>
     </div>
   );
 }
