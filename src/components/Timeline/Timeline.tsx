@@ -86,6 +86,7 @@ export function Timeline({
     state: 'idle',
     message: ''
   });
+  const [completedAnimationId, setCompletedAnimationId] = useState<string | null>(null);
 
   // 🎭 ドラッグ状態管理（改良版）
   const { dragState, startDrag, updateDrag, endDrag } = useDragState();
@@ -580,9 +581,9 @@ export function Timeline({
     return (
       <div className="flex items-center justify-center h-64 text-gray-500">
         <div className="text-center">
-          <Clock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <div className="text-6xl mb-3 animate-float">✨</div>
           <p className="text-lg font-medium">今日のタスクはありません</p>
-          <p className="text-sm">新しいタスクを追加して始めましょう</p>
+          <p className="text-sm">右下の「＋」ボタンから追加してみましょう</p>
         </div>
       </div>
     );
@@ -851,7 +852,7 @@ export function Timeline({
 
                   {/* メッセージカード風タスクカード */}
                   <div
-                    className={`flex-1 min-w-0 rounded-lg shadow-sm group-hover:shadow-lg transition-all cursor-pointer relative task-card timeline-task-content ${isActive
+                    className={`flex-1 min-w-0 rounded-lg shadow-sm group-hover:shadow-lg transition-all cursor-pointer relative task-card timeline-task-content ${completedAnimationId === task.id ? 'task-complete-pop' : ''} ${isActive
                       ? 'bg-orange-50 border-2 border-orange-300'
                       : task.completed
                         ? 'bg-blue-50 border-2 border-blue-300 opacity-90'
@@ -986,9 +987,11 @@ export function Timeline({
                           try {
                             await new Promise((res) => setTimeout(res, 300));
                             onTaskComplete(task.id);
+                            setCompletedAnimationId(task.id);
                             setTaskLoading(task.id, 'success');
                             showToast('success', `「${task.title}」を${task.completed ? '未完了' : '完了'}にしました`);
                             setTimeout(() => setTaskLoading(task.id, 'idle'), 800);
+                            setTimeout(() => setCompletedAnimationId(null), 300);
                           } catch {
                             setTaskLoading(task.id, 'error');
                             showToast('error', 'タスクの更新に失敗しました');

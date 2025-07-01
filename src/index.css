@@ -1073,6 +1073,18 @@
     }
   }
 
+  @keyframes pop {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
   /* ボタンのベーススタイル - アニメーション強化 */
   .btn-primary {
     @apply relative bg-blue-500 hover:bg-blue-600 text-white font-medium px-6 py-3 rounded-lg;
@@ -1157,6 +1169,10 @@
     opacity: 0.7;
     background: rgb(var(--neutral-50));
     transform: scale(0.98);
+  }
+
+  .task-complete-pop {
+    animation: pop 0.3s ease;
   }
 
   /* サイドバーアイテム - アニメーション強化 */

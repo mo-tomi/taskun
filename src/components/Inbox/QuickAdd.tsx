@@ -151,7 +151,7 @@ export function QuickAdd({ onAddTask, currentDate, isOpen, onToggle }: QuickAddP
       /* メインのクイック追加ボタンのみ */
       <button
         onClick={onToggle}
-        className="fixed bottom-6 right-6 gradient-primary text-white rounded-full p-4 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 z-50 pulse-glow group"
+        className="fixed bottom-6 right-6 gradient-primary text-white rounded-full p-5 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 z-50 pulse-glow group animate-bounce"
         title="クイック追加"
       >
         <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-200" />
