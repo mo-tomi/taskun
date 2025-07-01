@@ -99,20 +99,8 @@ export function Timeline({
   // at top of Timeline component, after state definitions or before useEffects, insert refs and state
   const timeHeaderRef = useRef<HTMLDivElement | null>(null);
   const statusCardRef = useRef<HTMLDivElement | null>(null);
-  const [offsetCompensation, setOffsetCompensation] = useState(0);
-
-  useEffect(() => {
-    const updateOffset = () => {
-      if (timeHeaderRef.current && statusCardRef.current) {
-        const headerBottom = timeHeaderRef.current.getBoundingClientRect().bottom;
-        const statusBottom = statusCardRef.current.getBoundingClientRect().bottom;
-        setOffsetCompensation(headerBottom - statusBottom);
-      }
-    };
-    updateOffset();
-    window.addEventListener('resize', updateOffset);
-    return () => window.removeEventListener('resize', updateOffset);
-  }, []);
+  // offsetCompensation は不要になったため0に固定
+  const offsetCompensation = 0;
 
   // リアルタイム時計の更新
   useEffect(() => {
@@ -614,145 +602,171 @@ export function Timeline({
 
   return (
     <div className="relative min-h-screen">
-      {/* メインコンテナ */}
+      {/* 固定ヘッダー - 現在時刻表示のみ */}
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
+        <div ref={statusCardRef} className="p-4 bg-blue-50 border-b border-blue-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
+              <span className="text-lg font-extrabold text-blue-700 tracking-widest drop-shadow">現在時刻</span>
+              <span className="text-2xl font-extrabold text-blue-700 font-mono drop-shadow animate-pulse">
+                {format(currentTime, 'HH:mm:ss')}
+              </span>
+            </div>
+            <div className="text-xs text-gray-500">
+              {format(currentTime, 'yyyy年M月d日(E)', { locale: ja })}
+            </div>
+          </div>
+
+          {/* 現在のタスク表示 */}
+          {currentTask ? (
+            <div className="p-3 bg-green-100 border border-green-300 rounded-md">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-green-800">🟢 実行中</div>
+                  <div className="text-lg font-semibold text-green-900">
+                    {currentTask.emoji} {currentTask.title}
+                  </div>
+                  <div className="text-sm text-green-700">
+                    {currentTask.startTime} - {currentTask.endTime}
+                  </div>
+                </div>
+                <button
+                  onClick={() => onTaskComplete(currentTask.id)}
+                  className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
+                >
+                  完了
+                </button>
+              </div>
+            </div>
+          ) : nextTask ? (
+            <div className="p-3 bg-orange-100 border border-orange-300 rounded-md">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-orange-800">⏳ 次のタスク</div>
+                  <div className="text-lg font-semibold text-orange-900">
+                    {nextTask.emoji} {nextTask.title}
+                  </div>
+                  <div className="text-sm text-orange-700">
+                    {nextTask.startTime} 開始予定
+                  </div>
+                </div>
+                <div className="text-xs text-orange-600">
+                  あと {Math.ceil((parseInt(nextTask.startTime.split(':')[0]) * 60 + parseInt(nextTask.startTime.split(':')[1]) -
+                    (parseInt(format(currentTime, 'HH').split(':')[0]) * 60 + parseInt(format(currentTime, 'mm')))) / 60)} 時間
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-3 bg-gray-100 border border-gray-300 rounded-md">
+              <div className="text-center">
+                <div className="text-sm font-medium text-gray-600">📋 本日のタスク一覧を確認してください</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* スクロール可能なメインコンテンツ */}
       <div className="flex">
         {/* 左側：時間軸 */}
-        <div className="w-20 flex-shrink-0 relative">
-          <div className="sticky top-0 bg-white border-r border-gray-200 h-screen">
-            {/* 時間軸ヘッダー */}
-            <div ref={timeHeaderRef} className="h-24 border-b border-gray-200 flex items-center justify-center bg-gray-50">
-              <span className="text-sm font-medium text-gray-600">時間</span>
-            </div>
+        <div className="w-20 flex-shrink-0 bg-white border-r border-gray-200">
+          {/* 時間軸ヘッダー */}
+          <div ref={timeHeaderRef} className="h-6 border-b border-gray-200 flex items-center justify-center bg-gray-50">
+            <span className="text-xs font-medium text-gray-600">時間</span>
+          </div>
 
-            {/* 時間軸 */}
-            <div className="relative">
-              {timeSlots.map((hour) => (
-                <div
-                  key={hour}
-                  className="relative border-b border-gray-100"
-                  style={{ height: `${PIXELS_PER_HOUR}px` }}
-                >
-                  <div className="absolute top-0 left-0 w-full h-full flex items-start justify-center pt-1">
-                    <span className="text-sm font-medium text-gray-700 bg-white px-1 rounded">
-                      {hour.toString().padStart(2, '0')}:00
-                    </span>
-                  </div>
-
-                  {/* 30分マーク */}
-                  <div
-                    className="absolute left-0 w-full flex items-center justify-center"
-                    style={{ top: `${PIXELS_PER_HOUR / 2}px` }}
-                  >
-                    <span className="text-xs text-gray-400 bg-white px-1">
-                      {hour.toString().padStart(2, '0')}:30
-                    </span>
-                  </div>
-
-                  {/* 現在時刻インジケーター */}
-                  {(() => {
-                    const now = new Date();
-                    const currentHour = now.getHours();
-                    const currentMinutes = now.getMinutes();
-
-                    if (currentHour === hour) {
-                      const position = (currentMinutes / 60) * PIXELS_PER_HOUR;
-                      return (
-                        <div
-                          className="absolute left-0 w-full z-10"
-                          style={{ top: `${position}px` }}
-                        >
-                          <div className="flex items-center">
-                            <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-md animate-pulse" />
-                            <div className="flex-1 h-0.5 bg-red-500 shadow-sm" />
-                          </div>
-                          <div className="absolute left-4 -top-5 text-xs font-medium text-red-600 bg-white px-1 rounded shadow">
-                            {format(now, 'HH:mm')}
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-
-                  {/* 最後の要素にrefを設定 */}
-                  {hour === 23 && (
-                    <div ref={lastTimeSlotRef} style={{ height: '1px', position: 'absolute', bottom: 0 }} />
-                  )}
+          {/* 時間軸 - スクロールと連動 */}
+          <div className="relative">
+            {timeSlots.map((hour) => (
+              <div
+                key={hour}
+                className="relative border-b border-gray-100"
+                style={{ height: `${PIXELS_PER_HOUR}px` }}
+              >
+                <div className="absolute top-0 left-0 w-full h-full flex items-start justify-center pt-1">
+                  <span className="text-sm font-medium text-gray-700 bg-white px-1 rounded">
+                    {hour.toString().padStart(2, '0')}:00
+                  </span>
                 </div>
-              ))}
-            </div>
+
+                {/* 30分マーク */}
+                <div
+                  className="absolute left-0 w-full flex items-center justify-center"
+                  style={{ top: `${PIXELS_PER_HOUR / 2}px` }}
+                >
+                  <span className="text-xs text-gray-400 bg-white px-1">
+                    {hour.toString().padStart(2, '0')}:30
+                  </span>
+                </div>
+
+                {/* 現在時刻インジケーター */}
+                {(() => {
+                  const now = new Date();
+                  const currentHour = now.getHours();
+                  const currentMinutes = now.getMinutes();
+
+                  if (currentHour === hour) {
+                    const position = (currentMinutes / 60) * PIXELS_PER_HOUR;
+                    return (
+                      <div
+                        className="absolute left-0 w-full z-10"
+                        style={{ top: `${position}px` }}
+                      >
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-md animate-pulse" />
+                          <div className="flex-1 h-0.5 bg-red-500 shadow-sm" />
+                        </div>
+                        <div className="absolute left-4 -top-5 text-xs font-medium text-red-600 bg-white px-1 rounded shadow">
+                          {format(now, 'HH:mm')}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* 最後の要素にrefを設定 */}
+                {hour === 23 && (
+                  <div ref={lastTimeSlotRef} style={{ height: '1px', position: 'absolute', bottom: 0 }} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* 右側：メインコンテンツ */}
-        <div className="flex-1 p-4">
-          {/* リアルタイム状況表示 */}
-          <div ref={statusCardRef} className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
-                <span className="text-lg font-extrabold text-blue-700 tracking-widest drop-shadow">現在時刻</span>
-                <span className="text-2xl font-extrabold text-blue-700 font-mono drop-shadow animate-pulse">
-                  {format(currentTime, 'HH:mm:ss')}
-                </span>
-              </div>
-              <div className="text-xs text-gray-500">
-                {format(currentTime, 'yyyy年M月d日(E)', { locale: ja })}
-              </div>
-            </div>
+        {/* 右側：タスク表示エリア */}
+        <div className="flex-1 relative">
+          {/* 現在時刻ライン（タスクエリア側） */}
+          {(() => {
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinutes = now.getMinutes();
 
-            {/* 現在のタスク表示 */}
-            {currentTask ? (
-              <div className="p-3 bg-green-100 border border-green-300 rounded-md">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-green-800">🟢 実行中</div>
-                    <div className="text-lg font-semibold text-green-900">
-                      {currentTask.emoji} {currentTask.title}
-                    </div>
-                    <div className="text-sm text-green-700">
-                      {currentTask.startTime} - {currentTask.endTime}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => onTaskComplete(currentTask.id)}
-                    className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
-                  >
-                    完了
-                  </button>
-                </div>
-              </div>
-            ) : nextTask ? (
-              <div className="p-3 bg-orange-100 border border-orange-300 rounded-md">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-orange-800">⏳ 次のタスク</div>
-                    <div className="text-lg font-semibold text-orange-900">
-                      {nextTask.emoji} {nextTask.title}
-                    </div>
-                    <div className="text-sm text-orange-700">
-                      {nextTask.startTime} 開始予定
-                    </div>
-                  </div>
-                  <div className="text-xs text-orange-600">
-                    あと {Math.ceil((parseInt(nextTask.startTime.split(':')[0]) * 60 + parseInt(nextTask.startTime.split(':')[1]) -
-                      (parseInt(format(currentTime, 'HH').split(':')[0]) * 60 + parseInt(format(currentTime, 'mm')))) / 60)} 時間
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="p-3 bg-gray-100 border border-gray-300 rounded-md">
-                <div className="text-center">
-                  <div className="text-sm font-medium text-gray-600">📋 本日のタスク一覧を確認してください</div>
-                </div>
-              </div>
-            )}
-          </div>
+            if (currentHour >= 6 && currentHour <= 23) {
+              // 6時からの相対位置を計算
+              const totalMinutes = (currentHour - 6) * 60 + currentMinutes;
+              const position = totalMinutes * PIXELS_PER_MINUTE + 6; // paddingTop分を加算
 
-          {/* タスク一覧 - 時間軸に沿って配置 */}
+              return (
+                <div
+                  className="absolute left-0 right-0 z-20 pointer-events-none"
+                  style={{ top: `${position}px` }}
+                >
+                  <div className="w-full h-0.5 bg-red-500 shadow-sm opacity-75" />
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* タスク一覧 - 時間軸に沿って配置（上部に6pxのパディング追加） */}
           <div
             className={`relative pb-48 timeline-task-container ${draggedTask ? 'timeline-dragging' : ''}`}
-            style={{ height: `${18 * PIXELS_PER_HOUR + 192}px` }}
+            style={{
+              height: `${18 * PIXELS_PER_HOUR + 6 + 192}px`,
+              paddingTop: '6px'
+            }}
             onDragOver={handleDragOver}
             onDrop={(e) => e.preventDefault()}
           >
@@ -810,7 +824,7 @@ export function Timeline({
                         : ''
                     }`}
                   style={{
-                    top: `${topPosition + offsetCompensation}px`,
+                    top: `${topPosition}px`,
                     height: `${guaranteedHeight}px`,
                     left: `${task.layout.left * 100}%`,
                     width: `${task.layout.width * 100}%`,
