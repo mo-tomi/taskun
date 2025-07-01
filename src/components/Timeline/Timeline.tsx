@@ -606,6 +606,10 @@ export function Timeline({
   const PIXELS_PER_HOUR = 64;
   const PIXELS_PER_MINUTE = PIXELS_PER_HOUR / 60;
 
+  // タスクカード間のギャップ（ピクセル）
+  // 0 = ぴったり連結、1-2 = 微妙な区切り、3+ = 明確な分離
+  const TASK_GAP = 2;
+
   return (
     <div className="relative min-h-screen">
       {/* メインコンテナ */}
@@ -772,15 +776,16 @@ export function Timeline({
               // 6時からの相対位置を計算
               const topPosition = (startMinutes - timeToMinutes('06:00')) * PIXELS_PER_MINUTE;
 
-              // 🌅 複数日タスクの場合、適切な高さを計算
-              let taskHeight = (endMinutes - startMinutes) * PIXELS_PER_MINUTE;
+              // 🌅 複数日タスクの場合、適切な高さを計算（ギャップ分を減算）
+              let taskHeight = (endMinutes - startMinutes) * PIXELS_PER_MINUTE - TASK_GAP;
               if (endMinutes < startMinutes) {
                 // 翌日にまたがる場合
-                taskHeight = (timeToMinutes('24:00') - startMinutes + endMinutes) * PIXELS_PER_MINUTE;
+                taskHeight = (timeToMinutes('24:00') - startMinutes + endMinutes) * PIXELS_PER_MINUTE - TASK_GAP;
               }
 
               // 🎯 最小高さを60pxに保証（約2行のテキストが表示可能）
-              const guaranteedHeight = Math.max(taskHeight, 60);
+              // ただしギャップを考慮して最小高さからもギャップ分を引く
+              const guaranteedHeight = Math.max(taskHeight, 60 - TASK_GAP);
 
               const isNarrow = task.layout.width < 0.45;
 
@@ -802,7 +807,7 @@ export function Timeline({
                     width: `${task.layout.width * 100}%`,
                     paddingLeft: '0.25rem',
                     paddingRight: '0.25rem',
-                    marginBottom: '8px', // カード間の間隔を拡大
+                    // marginBottomを削除 - TASK_GAPによる制御に変更
                     zIndex: task.completed ? 1 : isActive ? 10 : isPast ? 2 : 5, // 明確なz-index指定
                   }}
                   draggable={!editingTaskId && !editingTimeTaskId}

@@ -1670,8 +1670,7 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
   /* ホバー時の優先表示 */
   transition: z-index 0.1s ease, transform 0.2s ease, box-shadow 0.2s ease;
 
-  /* カード間の最小間隔を強制 */
-  margin-bottom: 8px !important;
+  /* カード間隔はJavaScript側のTASK_GAPで制御 */
 
   /* 重なり防止のための背景確保 */
   background-clip: padding-box;
@@ -1722,7 +1721,7 @@ input[type="range"].slider-thumb::-moz-range-thumb:hover {
   }
 
   .timeline-task-card {
-    margin-bottom: 6px !important;
+    /* モバイルでもTASK_GAPによる制御を使用 */
   }
 }
 
