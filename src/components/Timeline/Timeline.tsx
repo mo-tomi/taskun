@@ -603,7 +603,9 @@ export function Timeline({
   // 🕐 時間軸の設定（6時〜23時）
   const timeSlots = Array.from({ length: 18 }, (_, i) => 6 + i);
 
-  const PIXELS_PER_HOUR = 64;
+  // 時間軸の縦方向間隔（1時間あたりのピクセル数）
+  // 64px = 標準, 96px = 1.5倍広い, 128px = 2倍広い
+  const PIXELS_PER_HOUR = 96;
   const PIXELS_PER_MINUTE = PIXELS_PER_HOUR / 60;
 
   // タスクカード間のギャップ（ピクセル）
@@ -625,7 +627,11 @@ export function Timeline({
             {/* 時間軸 */}
             <div className="relative">
               {timeSlots.map((hour) => (
-                <div key={hour} className="relative h-16 border-b border-gray-100">
+                <div
+                  key={hour}
+                  className="relative border-b border-gray-100"
+                  style={{ height: `${PIXELS_PER_HOUR}px` }}
+                >
                   <div className="absolute top-0 left-0 w-full h-full flex items-start justify-center pt-1">
                     <span className="text-sm font-medium text-gray-700 bg-white px-1 rounded">
                       {hour.toString().padStart(2, '0')}:00
@@ -633,7 +639,10 @@ export function Timeline({
                   </div>
 
                   {/* 30分マーク */}
-                  <div className="absolute top-8 left-0 w-full flex items-center justify-center">
+                  <div
+                    className="absolute left-0 w-full flex items-center justify-center"
+                    style={{ top: `${PIXELS_PER_HOUR / 2}px` }}
+                  >
                     <span className="text-xs text-gray-400 bg-white px-1">
                       {hour.toString().padStart(2, '0')}:30
                     </span>
@@ -646,7 +655,7 @@ export function Timeline({
                     const currentMinutes = now.getMinutes();
 
                     if (currentHour === hour) {
-                      const position = (currentMinutes / 60) * 64; // 64px = h-16
+                      const position = (currentMinutes / 60) * PIXELS_PER_HOUR;
                       return (
                         <div
                           className="absolute left-0 w-full z-10"
@@ -743,7 +752,7 @@ export function Timeline({
           {/* タスク一覧 - 時間軸に沿って配置 */}
           <div
             className={`relative pb-48 timeline-task-container ${draggedTask ? 'timeline-dragging' : ''}`}
-            style={{ height: `${18 * 64 + 192}px` }}
+            style={{ height: `${18 * PIXELS_PER_HOUR + 192}px` }}
             onDragOver={handleDragOver}
             onDrop={(e) => e.preventDefault()}
           >
